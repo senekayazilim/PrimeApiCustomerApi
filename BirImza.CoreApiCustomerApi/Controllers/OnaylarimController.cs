@@ -35,7 +35,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             _logger = logger;
         }
         /// <summary>
-        /// CADES ve PADES e-imza atma işlemi için ilk adımdır
+        /// CADES, XADES ve PADES e-imza atma işlemi için ilk adımdır
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
@@ -70,6 +70,38 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 DisplayLanguage = "en"
                                             })
                                     .ReceiveJson<ApiResult<SignStepOneCadesCoreResult>>();
+
+                    result.KeyID = signStepOneCoreResult.Result.KeyID;
+                    result.KeySecret = signStepOneCoreResult.Result.KeySecret;
+                    result.State = signStepOneCoreResult.Result.State;
+                    result.OperationId = operationId;
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+            else if (request.SignatureType == "xades")
+            {
+                try
+                {
+                    // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir dosya olarak ayarlayınız
+                    var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.xml");
+
+                    // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiXades/SignStepOneXadesCore"
+                                    .WithHeader("X-API-KEY", _apiKey)
+                                    .PostJsonAsync(
+                                            new SignStepOneXadesCoreRequest()
+                                            {
+                                                CerBytes = request.Certificate,
+                                                FileData = fileData,
+                                                SignatureIndex = 0,
+                                                OperationId = operationId,
+                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                DisplayLanguage = "en"
+                                            })
+                                    .ReceiveJson<ApiResult<SignStepOneXadesCoreResult>>();
 
                     result.KeyID = signStepOneCoreResult.Result.KeyID;
                     result.KeySecret = signStepOneCoreResult.Result.KeySecret;
@@ -205,7 +237,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         }
 
         /// <summary>
-        /// CADES ve PADES e-imza atma işlemi için son adımdır
+        /// CADES, XADES ve PADES e-imza atma işlemi için son adımdır
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
@@ -234,6 +266,33 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 DisplayLanguage = "en"
                                             })
                                     .ReceiveJson<ApiResult<SignStepThreeCadesCoreResult>>();
+
+                    result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "FinishSign");
+                }
+            }
+            else if (request.SignatureType == "xades")
+            {
+                try
+                {
+                    // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiXades/signStepThreeXadesCore"
+                                    .WithHeader("X-API-KEY", _apiKey)
+                                    .PostJsonAsync(
+                                            new SignStepThreeXadesCoreRequest()
+                                            {
+                                                SignedData = request.SignedData,
+                                                KeyId = request.KeyId,
+                                                KeySecret = request.KeySecret,
+                                                OperationId = request.OperationId,
+                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                DisplayLanguage = "en"
+                                            })
+                                    .ReceiveJson<ApiResult<SignStepThreeXadesCoreResult>>();
 
                     result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
 
@@ -309,6 +368,45 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 CitizenshipNo = request.CitizenshipNo,
                                             })
                                     .ReceiveJson<ApiResult<SignStepOneCoreInternalForCadesMobileResult>>();
+
+                    if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
+                    {
+                        result.Error = signStepOneCoreResult.Error;
+                    }
+                    else
+                    {
+                        result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result.Error = ex.Message;
+                }
+            }
+            else if (request.SignatureType == "xades")
+            {
+                // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
+                var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.xml");
+
+                try
+                {
+                    // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiXadesMobile/SignStepOneXadesMobileCore"
+                                    .WithHeader("X-API-KEY", _apiKey)
+                                    .PostJsonAsync(
+                                            new SignStepOneXadesMobileCoreRequest()
+                                            {
+                                                FileData = fileData,
+                                                SignatureIndex = 0,
+                                                OperationId = request.OperationId,
+                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                DisplayLanguage = "en",
+                                                PhoneNumber = request.PhoneNumber,
+                                                Operator = request.Operator,
+                                                UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
+                                                CitizenshipNo = request.CitizenshipNo,
+                                            })
+                                    .ReceiveJson<ApiResult<SignStepOneCoreInternalForXadesMobileResult>>();
 
                     if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
                     {
@@ -1030,6 +1128,47 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string KeySecret { get; set; }
     }
 
+    public class SignStepOneXadesCoreRequest : BaseRequest
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarında bulunana e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır
+        /// </summary>
+        public string CerBytes { get; set; }
+        /// <summary>
+        /// İmzalanacak dosyadır
+        /// </summary>
+        public byte[] FileData { get; set; }
+        /// <summary>
+        /// Dosya üzerinde kaçıncı imza olduğu bilgisidir. Dosya üzerinde hiç imza yok ise 0 değeri atanır.
+        /// </summary>
+        public int SignatureIndex { get; set; }
+        /// <summary>
+        /// Son kullanıcının geolocation bilgisidir. API bu alanı şimdilik kullanmamaktadır. Bu nedenle null olarak atanabilir.
+        /// </summary>
+        public SignStepOneRequestCoordinates Coordinates { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+    }
+
+    public class SignStepOneXadesCoreResult
+    {
+        /// <summary>
+        /// e-İmza aracına iletilecek, e-imza state'idir.
+        /// </summary>
+        public string State { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait ID değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeyID { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait KeySecret değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeySecret { get; set; }
+    }
+
     public class SignStepOneCoreInternalForPadesMobileResult
     {
         /// <summary>
@@ -1039,6 +1178,14 @@ namespace BirImza.CoreApiCustomerApi.Controllers
     }
 
     public class SignStepOneCoreInternalForCadesMobileResult
+    {
+        /// <summary>
+        /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
+        /// </summary>
+        public bool IsSuccess { get; set; }
+    }
+
+    public class SignStepOneCoreInternalForXadesMobileResult
     {
         /// <summary>
         /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
@@ -1091,6 +1238,47 @@ namespace BirImza.CoreApiCustomerApi.Controllers
     }
 
     public class SignStepOneCadesMobileCoreRequest : BaseRequest
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarında bulunana e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır
+        /// </summary>
+        public string CerBytes { get; set; }
+        /// <summary>
+        /// İmzalanacak dosyadır
+        /// </summary>
+        public byte[] FileData { get; set; }
+        /// <summary>
+        /// Dosya üzerinde kaçıncı imza olduğu bilgisidir. Dosya üzerinde hiç imza yok ise 0 değeri atanır.
+        /// </summary>
+        public int SignatureIndex { get; set; }
+        /// <summary>
+        /// Son kullanıcının geolocation bilgisidir. API bu alanı şimdilik kullanmamaktadır. Bu nedenle null olarak atanabilir.
+        /// </summary>
+        public SignStepOneRequestCoordinates Coordinates { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasıdır. Örnek: 5446786666
+        /// </summary>
+        public string PhoneNumber { get; set; }
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasının bağlı olduğu operatördür. Örnek: TURKCELL, VODAFONE, AVEA
+        /// </summary>
+        public string Operator { get; set; }
+        /// <summary>
+        /// İmza atarken kullanıcıya gösterilecek mesaj
+        /// </summary>
+        public string UserPrompt { get; set; }
+        /// <summary>
+        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+    }
+    public class SignStepOneXadesMobileCoreRequest : BaseRequest
     {
         /// <summary>
         /// Son kullanıcı bilgisayarında bulunana e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır
@@ -1229,6 +1417,34 @@ namespace BirImza.CoreApiCustomerApi.Controllers
     }
 
     public class SignStepThreeCadesCoreRequest : BaseRequest
+    {
+        /// <summary>
+        /// e-İmza aracı tarafından imzalanmış veri
+        /// </summary>
+        public string SignedData { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait ID değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeyId { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait KeySecret değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeySecret { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    public class SignStepThreeXadesCoreResult
+    {
+        /// <summary>
+        /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
+        /// </summary>
+        public bool IsSuccess { get; set; }
+    }
+
+    public class SignStepThreeXadesCoreRequest : BaseRequest
     {
         /// <summary>
         /// e-İmza aracı tarafından imzalanmış veri
