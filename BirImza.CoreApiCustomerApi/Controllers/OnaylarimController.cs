@@ -2,6 +2,9 @@
 using Flurl.Http;
 using System.IO;
 using System.Text.Json;
+using System.Xml;
+using Microsoft.AspNetCore.Components.Forms;
+using System.Diagnostics.Metrics;
 
 namespace BirImza.CoreApiCustomerApi.Controllers
 {
@@ -67,7 +70,8 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 SignatureIndex = 0,
                                                 OperationId = operationId,
                                                 RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                                DisplayLanguage = "en"
+                                                DisplayLanguage = "en",
+                                               
                                             })
                                     .ReceiveJson<ApiResult<SignStepOneCadesCoreResult>>();
 
@@ -83,10 +87,22 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             }
             else if (request.SignatureType == "xades")
             {
+
+
+
+
                 try
                 {
                     // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir dosya olarak ayarlayınız
                     var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.xml");
+
+                    if (request.XmlSignatureType == 2)
+                    {
+                        fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
+                    }
+                    
+
+
 
                     // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
                     var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiXades/SignStepOneXadesCore"
@@ -99,7 +115,10 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 SignatureIndex = 0,
                                                 OperationId = operationId,
                                                 RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                                DisplayLanguage = "en"
+                                                DisplayLanguage = "en",
+                                                XmlSignatureType = request.XmlSignatureType,
+                                                  EnvelopingObjectMimeType = request.EnvelopingObjectMimeType,
+                                                  EnvelopingObjectEncoding = request.EnvelopingObjectEncoding,
                                             })
                                     .ReceiveJson<ApiResult<SignStepOneXadesCoreResult>>();
 
@@ -277,6 +296,9 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             }
             else if (request.SignatureType == "xades")
             {
+
+
+
                 try
                 {
                     // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
@@ -333,6 +355,48 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
             return result;
         }
+
+        public byte[] PdfToBase64(byte[] inputFile)
+        {
+
+            // PDF dosyasını base64'e çevir
+            string base64Pdf = Convert.ToBase64String(inputFile);
+
+            // XML belgesini oluştur
+            XmlDocument xmlDoc = new XmlDocument();
+
+            // ds namespace tanımı
+            string dsNamespace = "http://www.w3.org/2000/09/xmldsig#";
+
+            // Kök öğe: Signature (istersen burayı da genişletebiliriz)
+            XmlElement signatureElement = xmlDoc.CreateElement("ds", "Signature", dsNamespace);
+            xmlDoc.AppendChild(signatureElement);
+
+            // <ds:Object> oluştur
+            XmlElement objectElement = xmlDoc.CreateElement("ds", "Object", dsNamespace);
+            objectElement.SetAttribute("Encoding", "http://www.w3.org/2000/09/xmldsig#base64");
+            objectElement.SetAttribute("Id", "xmldsig-" + Guid.NewGuid().ToString() + "-object0");
+            objectElement.SetAttribute("MimeType", "application/pdf");
+
+            // Base64 içeriği ekle (isteğe bağlı: satır başı karakteri koyabilirsin)
+            XmlText base64Text = xmlDoc.CreateTextNode(base64Pdf);
+            objectElement.AppendChild(base64Text);
+
+            // <ds:Object> öğesini <ds:Signature> içine yerleştir
+            signatureElement.AppendChild(objectElement);
+
+            byte[] xmlBytes;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                xmlDoc.Save(ms);
+                xmlBytes = ms.ToArray();
+            }
+
+            return xmlBytes;
+
+        }
+
+        
 
         /// <summary>
         /// Mobil imza atma işlemi için kullanılan metoddur
@@ -930,9 +994,23 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// </summary>
         public string Certificate { get; set; }
         /// <summary>
-        /// atılacak e-imza türüdür, değerler pades ve cades olabilir
+        /// atılacak e-imza türüdür, değerler pades, xades ve cades olabilir
         /// </summary>
         public string SignatureType { get; set; }
+
+        /// <summary>
+        /// Enveloping:2, Enveloped:4. Değer verilmez ise 4, yani Enveloped imza atılır.
+        /// </summary>
+        public int? XmlSignatureType { get; set; }
+
+        /// <summary>
+        /// Enveloping imza durumunda, bu özellik, zarf içinde yer alan nesnenin Encoding (kodlama) özniteliğini içerir. Default değeri http://www.w3.org/2000/09/xmldsig#base64
+        /// </summary>
+        public string? EnvelopingObjectEncoding { get; set; }
+        /// <summary>
+        /// Enveloping imza durumunda, bu özellik, zarf içinde yer alan nesnenin MIME türü (MIME type) özniteliğini içerir. Default değeri application/pdf
+        /// </summary>
+        public string? EnvelopingObjectMimeType { get; set; }
     }
 
     public class CreateStateOnOnaylarimApiResult
@@ -1037,7 +1115,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// </summary>
         public Guid OperationId { get; set; }
         /// <summary>
-        /// atılacak e-imza türüdür, değerler pades ve cades olabilir
+        /// atılacak e-imza türüdür, değerler pades, xades ve cades olabilir
         /// </summary>
         public string SignatureType { get; set; }
     }
@@ -1069,7 +1147,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// </summary>
         public Guid OperationId { get; set; }
         /// <summary>
-        /// atılacak e-imza türüdür, değerler pades ve cades olabilir
+        /// atılacak e-imza türüdür, değerler pades, xades ve cades olabilir
         /// </summary>
         public string SignatureType { get; set; }
         /// <summary>
@@ -1150,6 +1228,21 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
         /// </summary>
         public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Enveloping:2, Enveloped:4. Değer verilmez ise 4, yani Enveloped imza atılır.
+        /// </summary>
+        public int? XmlSignatureType { get; set; }
+
+        /// <summary>
+        /// Enveloping imza durumunda, bu özellik, zarf içinde yer alan nesnenin MIME türü (MIME type) özniteliğini içerir. Default değeri application/pdf
+        /// </summary>
+        public string? EnvelopingObjectMimeType { get; set; }
+
+        /// <summary>
+        /// Enveloping imza durumunda, bu özellik, zarf içinde yer alan nesnenin Encoding (kodlama) özniteliğini içerir. Default değeri http://www.w3.org/2000/09/xmldsig#base64
+        /// </summary>
+        public string? EnvelopingObjectEncoding { get; set; }
 
     }
 
@@ -1495,7 +1588,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// </summary>
         public Guid OperationId { get; set; }
 
-     
+
     }
 
     public class QrCodeInfo
