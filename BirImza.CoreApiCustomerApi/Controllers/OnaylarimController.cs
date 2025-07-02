@@ -57,7 +57,9 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                 try
                 {
                     // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir dosya olarak ayarlayınız
-                    var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\2023-04-14_Api_Development.log");
+                    //var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\2023-04-14_Api_Development.log");
+                    var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\cades01.log");
+                    //var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\cadesikiimzali.log");
 
                     // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
                     var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiCades/SignStepOneCadesCore"
@@ -67,7 +69,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                             {
                                                 CerBytes = request.Certificate,
                                                 FileData = fileData,
-                                                SignatureIndex = 0,
+                                                SignatureIndex = int.MaxValue,
                                                 OperationId = operationId,
                                                 RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
                                                 DisplayLanguage = "en",
@@ -1175,8 +1177,10 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// İmzalanacak dosyadır
         /// </summary>
         public byte[] FileData { get; set; }
+        
         /// <summary>
         /// Dosya üzerinde kaçıncı imza olduğu bilgisidir. Dosya üzerinde hiç imza yok ise 0 değeri atanır.
+        /// Eğer paralel imza atılacaksa her seferinde int.maxvalue gönderilir
         /// </summary>
         public int SignatureIndex { get; set; }
         /// <summary>
