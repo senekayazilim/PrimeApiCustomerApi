@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.Xml;
 using Microsoft.AspNetCore.Components.Forms;
 using System.Diagnostics.Metrics;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace BirImza.CoreApiCustomerApi.Controllers
 {
@@ -143,26 +145,136 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                 {
 
                     // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
-                    var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
+                    var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\LargePdf.pdf");
                     var signatureWidgetBackground = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\Signature01.jpg");
 
-                    // Büyük dosyaların SignStepOnePadesCore metoduna json içerisinde gönderilmesi mümkün değildir.
-                    // Bu nedenle, büyük dosyalar imzalanmak istendiğinde, önce SignStepOneUploadFile metodu ile dosya sunucuya yüklenir.
-                    // Yükleme başarılı ise SignStepOnePadesCore metodu ile işleme devam edilir. Burada önemli olan, her iki metod için de aynı operationId değerini kullanmak gerekir
-                    // Bu şekilde bir kullanım yapılması durumunda, SignStepOnePadesCoreRequest objesindeki FileData parametresi boş byte array olarak gönderilmelidir.
+                    // Önce uploadFileBeforeOperation'a göre karar ver
                     var uploadFileBeforeOperation = true;
+                    var preUploaded = false;
 
                     if (uploadFileBeforeOperation)
                     {
-                        var signStepOneUploadFileResult = await $"{_onaylarimServiceUrl}/CoreApiPades/SignStepOneUploadFile"
-                                         .WithHeader("X-API-KEY", _apiKey)
-                                         .WithHeader("operationid", operationId)
-                                         .PostMultipartAsync(mp => mp
-                                                 .AddFile("file", $@"{_env.ContentRootPath}\Resources\sample.pdf", null, 4096, "sample.pdf")
-                                         )
-                                         .ReceiveJson<ApiResult<SignStepOneUploadFileResult>>();
+                        // Büyük dosyalarda chunked upload kullan, küçüklerde mevcut yol (tek parça upload)
+                        var chunkSize = 8 * 1024 * 1024; // 8MB
+                        var useChunkedUpload = fileData.Length > chunkSize;
 
+                        if (useChunkedUpload)
+                        {
+                            Guid? uploadSessionId = null;
+                            // 1) ChunkInit
+                            var totalChunks = (int)Math.Ceiling((double)fileData.Length / chunkSize);
+                            var initResult = await $"{_onaylarimServiceUrl}/CoreApiPades/ChunkInit"
+                                                .WithHeader("X-API-KEY", _apiKey)
+                                                .PostJsonAsync(new InitializeChunkedUploadRequest
+                                                {
+                                                    OperationId = operationId,
+                                                    ChunkSize = chunkSize,
+                                                    TotalSize = fileData.LongLength,
+                                                    TotalChunks = totalChunks,
+                                                    RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                    DisplayLanguage = "en"
+                                                })
+                                                .ReceiveJson<ApiResult<InitializeChunkedUploadResult>>();
 
+                            if (!string.IsNullOrWhiteSpace(initResult.Error))
+                            {
+                                result.Error = initResult.Error;
+                                return result;
+                            }
+
+                            uploadSessionId = initResult.Result.UploadSessionId;
+
+                            try
+                            {
+                                // 2) ChunkUpload (0-tabanlı)
+                                for (var chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++)
+                                {
+                                    var offset = chunkIndex * chunkSize;
+                                    var length = Math.Min(chunkSize, fileData.Length - offset);
+                                    var buffer = new byte[length];
+                                    Buffer.BlockCopy(fileData, offset, buffer, 0, length);
+
+                                    var content = new ByteArrayContent(buffer);
+                                    content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+                                    var uploadChunkResult = await $"{_onaylarimServiceUrl}/CoreApiPades/ChunkUpload"
+                                                                    .WithHeader("X-API-KEY", _apiKey)
+                                                                    .WithHeader("uploadsessionid", uploadSessionId)
+                                                                    .WithHeader("chunkindex", chunkIndex)
+                                                                    .PostAsync(content)
+                                                                    .ReceiveJson<ApiResult<UploadChunkResult>>();
+
+                                    if (!string.IsNullOrWhiteSpace(uploadChunkResult.Error) || (uploadChunkResult.Result != null && uploadChunkResult.Result.Accepted == false))
+                                    {
+                                        await $"{_onaylarimServiceUrl}/CoreApiPades/ChunkAbort"
+                                                .WithHeader("X-API-KEY", _apiKey)
+                                                .PostJsonAsync(new AbortChunkedUploadRequest
+                                                {
+                                                    UploadSessionId = uploadSessionId.Value,
+                                                    RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                    DisplayLanguage = "en"
+                                                });
+                                        result.Error = string.IsNullOrWhiteSpace(uploadChunkResult.Error) ? $"ChunkUpload not accepted at index {chunkIndex}" : uploadChunkResult.Error;
+                                        return result;
+                                    }
+                                }
+
+                                // 3) ChunkComplete
+                                var completeResult = await $"{_onaylarimServiceUrl}/CoreApiPades/ChunkComplete"
+                                                        .WithHeader("X-API-KEY", _apiKey)
+                                                        .PostJsonAsync(new CompleteChunkedUploadRequest
+                                                        {
+                                                            UploadSessionId = uploadSessionId.Value,
+                                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                            DisplayLanguage = "en"
+                                                        })
+                                                        .ReceiveJson<ApiResult<CompleteChunkedUploadResult>>();
+
+                                if (!string.IsNullOrWhiteSpace(completeResult.Error) || completeResult.Result.IsSuccess == false)
+                                {
+                                    result.Error = string.IsNullOrWhiteSpace(completeResult.Error) ? "ChunkComplete failed" : completeResult.Error;
+                                    return result;
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                if (uploadSessionId.HasValue)
+                                {
+                                    try
+                                    {
+                                        await $"{_onaylarimServiceUrl}/CoreApiPades/ChunkAbort"
+                                                .WithHeader("X-API-KEY", _apiKey)
+                                                .PostJsonAsync(new AbortChunkedUploadRequest
+                                                {
+                                                    UploadSessionId = uploadSessionId.Value,
+                                                    RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                    DisplayLanguage = "en"
+                                                });
+                                    }
+                                    catch { }
+                                }
+                                throw;
+                            }
+
+                            preUploaded = true;
+                        }
+                        else
+                        {
+                            // Mevcut tek parça yükleme yolu (SignStepOneUploadFile)
+                            var signStepOneUploadFileResult = await $"{_onaylarimServiceUrl}/CoreApiPades/SignStepOneUploadFile"
+                                             .WithHeader("X-API-KEY", _apiKey)
+                                             .WithHeader("operationid", operationId)
+                                             .PostMultipartAsync(mp => mp
+                                                     .AddFile("file", $@"{_env.ContentRootPath}\Resources\sample.pdf", null, 4096, "sample.pdf")
+                                             )
+                                             .ReceiveJson<ApiResult<SignStepOneUploadFileResult>>();
+                            if (!string.IsNullOrWhiteSpace(signStepOneUploadFileResult.Error))
+                            {
+                                result.Error = signStepOneUploadFileResult.Error;
+                                return result;
+                            }
+                            preUploaded = true;
+                        }
                     }
 
                     // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
@@ -172,7 +284,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                         new SignStepOnePadesCoreRequest()
                                         {
                                             CerBytes = request.Certificate,
-                                            FileData = uploadFileBeforeOperation ? new byte[] { } : fileData,
+                                            FileData = preUploaded ? new byte[] { } : fileData,
                                             SignatureIndex = 1,
                                             OperationId = operationId,
                                             RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
@@ -1746,6 +1858,141 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// </summary>
         public string ColorHtml { get; set; }
 
+    }
+
+    /// <summary>
+    /// Chunked upload başlatma isteği. Büyük dosyaları Cloudflare limiti altında parçalara bölerek yüklemek için kullanılır.
+    /// </summary>
+    public class InitializeChunkedUploadRequest : BaseRequest
+    {
+        /// <summary>
+        /// Aynı imzalama sürecinde kullanılacak tekil operasyon kimliğidir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+        /// <summary>
+        /// Her bir parçanın bayt cinsinden boyutu. 100MB altında bir değer önerilir (örn. 8–16MB).
+        /// </summary>
+        public int ChunkSize { get; set; }
+        /// <summary>
+        /// Dosyanın toplam bayt cinsinden boyutu.
+        /// </summary>
+        public long TotalSize { get; set; }
+        /// <summary>
+        /// Toplam parça sayısı. TotalSize / ChunkSize üst tamsayıya yuvarlanır.
+        /// </summary>
+        public int TotalChunks { get; set; }
+        /// <summary>
+        /// (Opsiyonel) Tüm dosyanın SHA-256 gibi bir özetidir. Sunucu doğrulama için kullanabilir.
+        /// </summary>
+        public string OverallHash { get; set; }
+    }
+
+    /// <summary>
+    /// Chunked upload başlatma yanıtı.
+    /// </summary>
+    public class InitializeChunkedUploadResult
+    {
+        /// <summary>
+        /// Yükleme oturum kimliğidir. Parça yükleme, durum ve tamamlama çağrılarında kullanılır.
+        /// </summary>
+        public Guid UploadSessionId { get; set; }
+        /// <summary>
+        /// İstemcinin gönderdiği OperationId bilgisidir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+        /// <summary>
+        /// Sunucu tarafından kabul edilen parça boyutu.
+        /// </summary>
+        public int ChunkSize { get; set; }
+        /// <summary>
+        /// Toplam parça sayısı.
+        /// </summary>
+        public int TotalChunks { get; set; }
+    }
+
+    /// <summary>
+    /// Bir parça yükleme çağrısının sonucu.
+    /// </summary>
+    public class UploadChunkResult
+    {
+        /// <summary>
+        /// Parça kabul edildiyse true döner. Aynı parça tekrar yüklense bile idempotent olarak true dönebilir.
+        /// </summary>
+        public bool Accepted { get; set; }
+    }
+
+    /// <summary>
+    /// Chunk status sorgulama isteği.
+    /// </summary>
+    public class GetUploadStatusRequest : BaseRequest
+    {
+        /// <summary>
+        /// InitializeChunkedUpload çağrısından dönen UploadSessionId.
+        /// </summary>
+        public Guid UploadSessionId { get; set; }
+    }
+
+    /// <summary>
+    /// Chunk status sorgulama yanıtı.
+    /// </summary>
+    public class GetUploadStatusResult
+    {
+        /// <summary>
+        /// Toplam parça sayısı.
+        /// </summary>
+        public int TotalChunks { get; set; }
+        /// <summary>
+        /// Sunucuya ulaşmış parça indeksleri listesi (0 tabanlı).
+        /// </summary>
+        public List<int> ReceivedChunkIndices { get; set; }
+    }
+
+    /// <summary>
+    /// Chunked upload tamamlama isteği. Sunucu tüm parçaları birleştirir ve orijinal dosyayı hazırlar.
+    /// </summary>
+    public class CompleteChunkedUploadRequest : BaseRequest
+    {
+        /// <summary>
+        /// InitializeChunkedUpload çağrısından dönen UploadSessionId.
+        /// </summary>
+        public Guid UploadSessionId { get; set; }
+    }
+
+    /// <summary>
+    /// Chunked upload tamamlama yanıtı.
+    /// </summary>
+    public class CompleteChunkedUploadResult
+    {
+        /// <summary>
+        /// Birleştirme ve finalize işlemi başarılı ise true.
+        /// </summary>
+        public bool IsSuccess { get; set; }
+        /// <summary>
+        /// İlgili OperationId bilgisi. Sonraki imzalama adımlarında kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    /// <summary>
+    /// Chunked upload iptal isteği.
+    /// </summary>
+    public class AbortChunkedUploadRequest : BaseRequest
+    {
+        /// <summary>
+        /// InitializeChunkedUpload çağrısından dönen UploadSessionId.
+        /// </summary>
+        public Guid UploadSessionId { get; set; }
+    }
+
+    /// <summary>
+    /// Chunked upload iptal yanıtı.
+    /// </summary>
+    public class AbortChunkedUploadResult
+    {
+        /// <summary>
+        /// Oturum iptal edildiyse true döner.
+        /// </summary>
+        public bool Aborted { get; set; }
     }
 
     public class SignStepOneUploadFileResult
