@@ -26,7 +26,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
 
         private readonly string _onaylarimServiceUrl = "https://localhost:44337";
-        private readonly string _apiKey = "278c0eb01c3f44e6ac0a64e43c478c0ab3e48a6fc4fe476987e52a3c8ced76b3";
+        private readonly string _apiKey = "0cff5a746a714868b2c1484acfc8b99af4a75cd294ac4a71ade420f4a22470ec";
 
 
         //private readonly string _onaylarimServiceUrl = "https://apitest.onaylarim.com";
@@ -75,7 +75,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 OperationId = operationId,
                                                 RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
                                                 DisplayLanguage = "en",
-                                               
+
                                             })
                                     .ReceiveJson<ApiResult<SignStepOneCadesCoreResult>>();
 
@@ -104,7 +104,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                     {
                         fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
                     }
-                    
+
 
 
 
@@ -121,8 +121,8 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
                                                 DisplayLanguage = "en",
                                                 XmlSignatureType = request.XmlSignatureType,
-                                                  EnvelopingObjectMimeType = request.EnvelopingObjectMimeType,
-                                                  EnvelopingObjectEncoding = request.EnvelopingObjectEncoding,
+                                                EnvelopingObjectMimeType = request.EnvelopingObjectMimeType,
+                                                EnvelopingObjectEncoding = request.EnvelopingObjectEncoding,
                                             })
                                     .ReceiveJson<ApiResult<SignStepOneXadesCoreResult>>();
 
@@ -396,7 +396,8 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 KeySecret = request.KeySecret,
                                                 OperationId = request.OperationId,
                                                 RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                                DisplayLanguage = "en"
+                                                DisplayLanguage = "en",
+                                                SignatureLevel = SignatureLevelForCades.aslBES,
                                             })
                                     .ReceiveJson<ApiResult<SignStepThreeCadesCoreResult>>();
 
@@ -510,7 +511,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
         }
 
-        
+
 
         /// <summary>
         /// Mobil imza atma işlemi için kullanılan metoddur
@@ -544,6 +545,158 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 Operator = request.Operator,
                                                 UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
                                                 CitizenshipNo = request.CitizenshipNo,
+                                            })
+                                    .ReceiveJson<ApiResult<SignStepOneCoreInternalForCadesMobileResult>>();
+
+                    if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
+                    {
+                        result.Error = signStepOneCoreResult.Error;
+                    }
+                    else
+                    {
+                        result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result.Error = ex.Message;
+                }
+            }
+            else if (request.SignatureType == "xades")
+            {
+                // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
+                var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.xml");
+
+                try
+                {
+                    // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiXadesMobile/SignStepOneXadesMobileCore"
+                                    .WithHeader("X-API-KEY", _apiKey)
+                                    .PostJsonAsync(
+                                            new SignStepOneXadesMobileCoreRequest()
+                                            {
+                                                FileData = fileData,
+                                                SignatureIndex = 0,
+                                                OperationId = request.OperationId,
+                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                DisplayLanguage = "en",
+                                                PhoneNumber = request.PhoneNumber,
+                                                Operator = request.Operator,
+                                                UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
+                                                CitizenshipNo = request.CitizenshipNo,
+                                            })
+                                    .ReceiveJson<ApiResult<SignStepOneCoreInternalForXadesMobileResult>>();
+
+                    if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
+                    {
+                        result.Error = signStepOneCoreResult.Error;
+                    }
+                    else
+                    {
+                        result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result.Error = ex.Message;
+                }
+            }
+            else if (request.SignatureType == "pades")
+            {
+                // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
+                var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
+
+                try
+                {
+                    // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiPadesMobile/SignStepOnePadesMobileCore"
+                                    .WithHeader("X-API-KEY", _apiKey)
+                                    .PostJsonAsync(
+                                            new SignStepOnePadesMobileCoreRequest()
+                                            {
+                                                FileData = fileData,
+                                                SignatureIndex = 0,
+                                                OperationId = request.OperationId,
+                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                DisplayLanguage = "en",
+                                                VerificationInfo = new VerificationInfo()
+                                                {
+                                                    Text = "Bu belge 5070 sayılı elektronik imza kanununa göre güvenli elektronik imza ile imzalanmıştır. Belgeye\r\nhttps://localhost:8082 adresinden 97275466-4A90128E46284E3181CF21020554BFEC452DBDE73",
+                                                    Width = 0.8f,
+                                                    Height = 0.1f,
+                                                    Left = 0.1f,
+                                                    Bottom = 0.03f,
+                                                    TransformOrigin = "left bottom"
+                                                },
+                                                QrCodeInfo = new QrCodeInfo()
+                                                {
+                                                    Text = "google.com",
+                                                    Width = 0.1f,
+                                                    Right = 0.03f,
+                                                    Top = 0.02f,
+                                                    TransformOrigin = "right top"
+                                                },
+                                                PhoneNumber = request.PhoneNumber,
+                                                Operator = request.Operator,
+                                                UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
+                                                CitizenshipNo = request.CitizenshipNo
+                                            })
+                                    .ReceiveJson<ApiResult<SignStepOneCoreInternalForPadesMobileResult>>();
+
+                    if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
+                    {
+                        result.Error = signStepOneCoreResult.Error;
+                    }
+                    else
+                    {
+                        result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result.Error = ex.Message;
+                }
+            }
+            return result;
+
+        }
+
+        /// <summary>
+        /// Mobil imza atma işlemi için kullanılan metoddur
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("MobileSignV2")]
+        public async Task<MobilSignResult> MobileSignV2(MobileSignRequestV2 request)
+        {
+            var result = new MobilSignResult();
+
+            if (request.SignatureType == "cades")
+            {
+                // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
+                var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
+
+                try
+                {
+                    // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiCadesMobile/SignStepOneCadesMobileCoreV2"
+                                    .WithHeader("X-API-KEY", _apiKey)
+                                    .PostJsonAsync(
+                                            new SignStepOneCadesMobileCoreRequestV2()
+                                            {
+                                                FileData = fileData,
+                                                OperationId = request.OperationId,
+                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                DisplayLanguage = "en",
+                                                PhoneNumber = request.PhoneNumber,
+                                                Operator = request.Operator,
+                                                UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
+                                                CitizenshipNo = request.CitizenshipNo,
+                                                SignatureLevel = request.SignatureLevel,
+                                                SignaturePath = request.SignaturePath,
+                                                SignatureTurkishProfile = request.SignatureTurkishProfile,
+                                                SerialOrParallel = request.SerialOrParallel
+
                                             })
                                     .ReceiveJson<ApiResult<SignStepOneCoreInternalForCadesMobileResult>>();
 
@@ -1232,6 +1385,8 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// atılacak e-imza türüdür, değerler pades, xades ve cades olabilir
         /// </summary>
         public string SignatureType { get; set; }
+
+
     }
 
     public class FinishSignResult
@@ -1277,6 +1432,87 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
         /// </summary>
         public string? CitizenshipNo { get; set; }
+
+        /// <summary>
+        /// Sadece CADES imzalar için. Null geçilirse BES türünde atılır.
+        /// </summary>
+        public SignatureLevelForCades? SignatureLevel { get; internal set; }
+        /// <summary>
+        /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
+        /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
+        /// Dosya üzerinde iki tane imza var ise ve ikinci imza üzerine imza atılacaksa S0:S0 gönderilir.
+        /// Parallel imzada bu parametre yok sayılır.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+        /// <summary>
+        /// İmza profilleri P1, P2, P3, P4. Şuan sadece P4 desteklenmektedir. Profil istenmiyorsa bu alan null geçilir.
+        /// Olası değerler
+        /// P1
+        /// P2
+        /// P3
+        /// P4
+        /// </summary>
+        public string SignatureTurkishProfile { get; set; }
+        /// <summary>
+        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse Parallel imza atılır.
+        /// Olası değerler
+        /// SERIAL
+        /// PARALLEL
+        /// </summary>
+        public string SerialOrParallel { get; set; }
+    }
+
+    public class MobileSignRequestV2
+    {
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+        /// <summary>
+        /// atılacak e-imza türüdür, değerler pades, xades ve cades olabilir
+        /// </summary>
+        public string SignatureType { get; set; }
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasıdır. Örnek: 5446786666
+        /// </summary>
+        public string PhoneNumber { get; set; }
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasının bağlı olduğu operatördür. Örnek: TURKCELL, VODAFONE, AVEA
+        /// </summary>
+        public string Operator { get; set; }
+
+        /// <summary>
+        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+        /// <summary>
+        /// Sadece CADES imzalar için. Null geçilirse BES türünde atılır.
+        /// </summary>
+        public SignatureLevelForCades? SignatureLevel { get; internal set; }
+        /// <summary>
+        /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
+        /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
+        /// Dosya üzerinde iki tane imza var ise ve ikinci imza üzerine imza atılacaksa S0:S0 gönderilir.
+        /// Parallel imzada bu parametre yok sayılır.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+        /// <summary>
+        /// İmza profilleri P1, P2, P3, P4. Şuan sadece P4 desteklenmektedir. Profil istenmiyorsa bu alan null geçilir.
+        /// Olası değerler
+        /// P1
+        /// P2
+        /// P3
+        /// P4
+        /// </summary>
+        public string? SignatureTurkishProfile { get; set; }
+        /// <summary>
+        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse Parallel imza atılır.
+        /// Olası değerler
+        /// SERIAL
+        /// PARALLEL
+        /// </summary>
+        public string SerialOrParallel { get; set; }
     }
 
     public class SignStepOneCadesCoreRequest : BaseRequest
@@ -1289,7 +1525,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// İmzalanacak dosyadır
         /// </summary>
         public byte[] FileData { get; set; }
-        
+
         /// <summary>
         /// Dosya üzerinde kaçıncı imza olduğu bilgisidir. Dosya üzerinde hiç imza yok ise 0 değeri atanır.
         /// Eğer paralel imza atılacaksa her seferinde int.maxvalue gönderilir
@@ -1487,6 +1723,73 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string? CitizenshipNo { get; set; }
 
     }
+
+    public class SignStepOneCadesMobileCoreRequestV2 : BaseRequest
+    {
+
+        /// <summary>
+        /// İmzalanacak dosyadır
+        /// </summary>
+        public byte[] FileData { get; set; }
+
+        /// <summary>
+        /// Son kullanıcının geolocation bilgisidir. API bu alanı şimdilik kullanmamaktadır. Bu nedenle null olarak atanabilir.
+        /// </summary>
+        public SignStepOneRequestCoordinates Coordinates { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasıdır. Örnek: 5446786666
+        /// </summary>
+        public string PhoneNumber { get; set; }
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasının bağlı olduğu operatördür. Örnek: TURKCELL, VODAFONE, AVEA
+        /// </summary>
+        public string Operator { get; set; }
+        /// <summary>
+        /// İmza atarken kullanıcıya gösterilecek mesaj
+        /// </summary>
+        public string UserPrompt { get; set; }
+        /// <summary>
+        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+        /// <summary>
+        /// Sadece CADES imzalar için. Null geçilirse BES türünde atılır.
+        /// </summary>
+        public SignatureLevelForCades? SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
+        /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
+        /// Dosya üzerinde iki tane imza var ise ve ikinci imza üzerine imza atılacaksa S0:S0 gönderilir.
+        /// Parallel imzada bu parametre yok sayılır.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+
+        /// <summary>
+        /// İmza profilleri P1, P2, P3, P4. Şuan sadece P4 desteklenmektedir. Profil istenmiyorsa bu alan null geçilir.
+        /// Olası değerler
+        /// P1
+        /// P2
+        /// P3
+        /// P4
+        /// </summary>
+        public string SignatureTurkishProfile { get; set; }
+
+
+        /// <summary>
+        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse Parallel imza atılır.
+        /// Olası değerler
+        /// SERIAL
+        /// PARALLEL
+        /// </summary>
+        public string SerialOrParallel { get; set; }
+    }
     public class SignStepOneXadesMobileCoreRequest : BaseRequest
     {
         /// <summary>
@@ -1643,6 +1946,11 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
         /// </summary>
         public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Sadece CADES imzalar için. Null geçilirse XL2 türünde atılır, daha düşük seviyeler için bu paramtere set edilmelidi.
+        /// </summary>
+        public SignatureLevelForCades? SignatureLevel { get; set; }
     }
 
     public class SignStepThreeXadesCoreResult
@@ -2103,6 +2411,20 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                 }
             }
         }
+    }
+
+    public enum SignatureLevelForCades
+    {
+        aslBES = 6,                 // BES (Basic Electronic Signature)
+        aslEPES = 7,                // EPES (Electronic Signature with an Explicit Policy)
+        aslT = 8,                   // T (Timestamped)
+        aslC = 9,                   // C (T with revocation references)
+        aslXType1 = 11,             // X Type 1 (C with an ES-C timestamp, CAdES only)
+        aslXType2 = 12,             // X Type 2 (C with a CertsAndCRLs timestamp, CAdES only)
+        aslXLType1 = 14,            // X-L Type 1 (C with revocation values and an ES-C timestamp, CAdES only)
+        aslXLType2 = 15,            // X-L Type 2 (C with revocation values and a CertsAndCRLs timestamp, CAdES only)
+        aslA = 16,                  // A (archived)
+
     }
 
 }
