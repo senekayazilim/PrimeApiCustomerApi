@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Flurl.Http;
 using System.IO;
 using System.Text.Json;
@@ -657,7 +658,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             if (request.SignatureType == "cades")
             {
                 // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
-                var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
+                //var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
 
                 try
                 {
@@ -667,7 +668,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                     .PostJsonAsync(
                                             new SignStepOneCadesMobileCoreRequestV2()
                                             {
-                                                FileData = fileData,
+                                                //FileData = fileData,
                                                 OperationId = request.OperationId,
                                                 RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
                                                 DisplayLanguage = "en",
@@ -675,7 +676,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 Operator = request.Operator,
                                                 UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
                                                 CitizenshipNo = request.CitizenshipNo,
-                                                SignatureLevel = request.SignatureLevel,
+                                                SignatureLevel = request.SignatureLevelForCades,
                                                 SignaturePath = request.SignaturePath,
                                                 SignatureTurkishProfile = request.SignatureTurkishProfile,
                                                 SerialOrParallel = request.SerialOrParallel
@@ -774,7 +775,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 Operator = request.Operator,
                                                 UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
                                                 CitizenshipNo = request.CitizenshipNo,
-                                                SignatureLevel = SignatureLevelForPades.paslBES,
+                                                SignatureLevel = request.SignatureLevelForPades,
                                                 SignatureTurkishProfile = request.SignatureTurkishProfile,
                                             })
                                     .ReceiveJson<ApiResult<SignStepOneCoreInternalForPadesMobileResult>>();
@@ -945,6 +946,51 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             {
             }
             return BadRequest("Hata");
+
+        }
+
+        /// <summary>
+        /// Cades imzalı bir belgenin içindeki imzaların bilgisini alır
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetSignatureListCades")]
+        public async Task<GetSignatureListResult> GetSignatureListCades(Guid operationId)
+        {
+            var result = new GetSignatureListResult();
+
+            try
+            {
+                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                var getSignatureListCoreResult = await $"{_onaylarimServiceUrl}/CoreApiCades/GetSignatureListCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new GetSignatureListCoreRequest()
+                                        {
+                                            OperationId = operationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                        })
+                                .ReceiveJson<ApiResult<GetSignatureListCoreResult>>();
+
+                result.Signatures = getSignatureListCoreResult.Result.Signatures
+                        .Select(x => new GetSignatureListResultItem()
+                        {
+                            ClaimedSigningTime = x.ClaimedSigningTime,
+                            EntityLabel = x.EntityLabel,
+                            Level = x.Level,
+                            LevelString = x.LevelString,
+                            SubjectRDN = x.SubjectRDN,
+                            Timestamped = x.Timestamped,
+                            CitizenshipNo = x.CitizenshipNo
+                        });
+
+                
+
+            }
+            catch (Exception ex)
+            {
+                result.Error = ex.Message;
+            }
+            return result;
 
         }
 
@@ -1167,6 +1213,53 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             catch (Exception ex)
             {
             }
+            return result;
+        }
+
+        [HttpPost("UploadFile")]
+        public async Task<UploadFileResult> UploadFile([FromForm] IFormFile file)
+        {
+            var result = new UploadFileResult();
+
+            if (file == null || file.Length == 0)
+            {
+                result.Error = "Yüklenecek dosya bulunamadı.";
+                return result;
+            }
+
+            var operationId = Guid.NewGuid();
+            result.OperationId = operationId;
+
+            try
+            {
+                using var stream = file.OpenReadStream();
+
+                var signStepOneUploadFileResult = await $"{_onaylarimServiceUrl}/CoreApiPades/SignStepOneUploadFile"
+                                    .WithHeader("X-API-KEY", _apiKey)
+                                    .WithHeader("operationid", operationId)
+                                    .PostMultipartAsync(mp => mp
+                                            .AddFile("file", stream, file.FileName, string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType)
+                                    )
+                                    .ReceiveJson<ApiResult<SignStepOneUploadFileResult>>();
+
+                if (!string.IsNullOrWhiteSpace(signStepOneUploadFileResult.Error))
+                {
+                    result.Error = signStepOneUploadFileResult.Error;
+                    return result;
+                }
+
+                if (signStepOneUploadFileResult.Result != null)
+                {
+                    result.IsSuccess = signStepOneUploadFileResult.Result.IsSuccess;
+                    result.OperationId = signStepOneUploadFileResult.Result.OperationId;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "UploadFile");
+                result.Error = ex.Message;
+            }
+
             return result;
         }
 

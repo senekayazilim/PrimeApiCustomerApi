@@ -111,6 +111,22 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string Error { get; set; }
     }
 
+    public class UploadFileResult
+    {
+        /// <summary>
+        /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
+        /// </summary>
+        public bool IsSuccess { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+        /// <summary>
+        /// Hata var ise detay bilgisi döner.
+        /// </summary>
+        public string Error { get; set; }
+    }
+
     public class MobileSignRequest
     {
         /// <summary>
@@ -135,33 +151,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// </summary>
         public string? CitizenshipNo { get; set; }
 
-        /// <summary>
-        /// Sadece CADES imzalar için. Null geçilirse BES türünde atılır.
-        /// </summary>
-        public SignatureLevelForCades? SignatureLevel { get; set; }
-        /// <summary>
-        /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
-        /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
-        /// Dosya üzerinde iki tane imza var ise ve ikinci imza üzerine imza atılacaksa S0:S0 gönderilir.
-        /// Parallel imzada bu parametre yok sayılır.
-        /// </summary>
-        public string? SignaturePath { get; set; }
-        /// <summary>
-        /// İmza profilleri P1, P2, P3, P4. Şuan sadece P4 desteklenmektedir. Profil istenmiyorsa bu alan null geçilir.
-        /// Olası değerler
-        /// P1
-        /// P2
-        /// P3
-        /// P4
-        /// </summary>
-        public string SignatureTurkishProfile { get; set; }
-        /// <summary>
-        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse Parallel imza atılır.
-        /// Olası değerler
-        /// SERIAL
-        /// PARALLEL
-        /// </summary>
-        public string SerialOrParallel { get; set; }
+        
     }
 
     public class MobileSignRequestV2
@@ -191,7 +181,12 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// <summary>
         /// Sadece CADES imzalar için. Null geçilirse BES türünde atılır.
         /// </summary>
-        public SignatureLevelForCades? SignatureLevel { get;  set; }
+        public SignatureLevelForCades? SignatureLevelForCades { get;  set; }
+
+        /// <summary>
+        /// Sadece PADES imzalar için. Null geçilirse BES türünde atılır.
+        /// </summary>
+        public SignatureLevelForPades? SignatureLevelForPades { get; set; }
         /// <summary>
         /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
         /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
@@ -215,5 +210,25 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// PARALLEL
         /// </summary>
         public string SerialOrParallel { get; set; }
+    }
+
+    public class GetSignatureListResult
+    {
+        /// <summary>
+        /// Hata var ise detay bilgisi döner.
+        /// </summary>
+        public string Error { get; set; }
+        public IEnumerable<GetSignatureListResultItem> Signatures { get; set; }
+    }
+
+    public class GetSignatureListResultItem
+    {
+        public string EntityLabel { get; set; }
+        public int Level { get; set; }
+        public string LevelString { get; set; }
+        public string SubjectRDN { get; set; }
+        public bool Timestamped { get; set; }
+        public string ClaimedSigningTime { get; set; }
+        public string? CitizenshipNo { get;  set; }
     }
 }

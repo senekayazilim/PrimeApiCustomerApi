@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BirImza.Types
+namespace  BirImza.Types
 {
     public class SignStepOnePadesMobileCoreRequest : BaseRequest
     {
@@ -171,6 +171,16 @@ namespace BirImza.Types
     public class SignStepOneCoreInternalForCadesRequest : BaseRequest
     {
         public string CerBytes { get; set; }
+    }
+
+    public class GetSignatureListCoreRequest : BaseRequest
+    {
+        
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
     }
 
     public class SignStepOneCadesCoreRequest : BaseRequest
@@ -827,6 +837,21 @@ namespace BirImza.Types
         public string KeySecret { get; set; }
     }
 
+    public class GetSignatureListCoreResult
+    {
+        public IEnumerable<GetSignatureListCoreResultItem> Signatures { get; set; }
+    }
+
+    public class GetSignatureListCoreResultItem
+    {
+        public string EntityLabel { get; set; }
+        public int Level { get; set; }
+        public string LevelString { get; set; }
+        public string SubjectRDN { get; set; }
+        public bool Timestamped { get; set; }
+        public string ClaimedSigningTime { get; set; }
+        public string? CitizenshipNo { get; set; }
+    }
 
 
 
@@ -988,7 +1013,7 @@ namespace BirImza.Types
         public int TotalChunks { get; set; }
     }
 
-
+    
 
     public class SignStepOneCoreInternalForCadesMobileResult
     {
@@ -1371,3 +1396,4 @@ namespace BirImza.Types
     }
 
 }
+
