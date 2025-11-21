@@ -210,6 +210,14 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// PARALLEL
         /// </summary>
         public string SerialOrParallel { get; set; }
+
+
+        /// <summary>
+        /// PADES imzada, PDF üzerine QR kod gibi alanlar ekleniyor.
+        /// Örnek kullanım sırasında, daha önce imza atılmış bir PDF imzalanmak istendiğinde bu QR Kod gibi alanların eklenmesinin engellenmesi gerekir.
+        /// Bu nedenle eğer IsFirstSigner false ise QR kod alanı eklenmeyecek şekilde süreç çalıştırılır
+        /// </summary>
+        public bool IsFirstSigner { get; set; }
     }
 
     public class GetSignatureListResult

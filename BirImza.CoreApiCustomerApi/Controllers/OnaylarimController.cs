@@ -740,44 +740,47 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             else if (request.SignatureType == "pades")
             {
                 // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
-                var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
+                //var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
 
+                var myRequest= new SignStepOnePadesMobileCoreRequestV2()
+                {
+                    OperationId = request.OperationId,
+                    RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                    DisplayLanguage = "en",
+                    PhoneNumber = request.PhoneNumber,
+                    Operator = request.Operator,
+                    UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
+                    CitizenshipNo = request.CitizenshipNo,
+                    SignatureLevel = request.SignatureLevelForPades,
+                    SignatureTurkishProfile = request.SignatureTurkishProfile,
+                };
+
+                if (request.IsFirstSigner)
+                {
+                    myRequest.VerificationInfo = new VerificationInfo()
+                    {
+                        Text = "Bu belge 5070 sayılı elektronik imza kanununa göre güvenli elektronik imza ile imzalanmıştır. Belgeye\r\nhttps://localhost:8082 adresinden 97275466-4A90128E46284E3181CF21020554BFEC452DBDE73",
+                        Width = 0.8f,
+                        Height = 0.1f,
+                        Left = 0.1f,
+                        Bottom = 0.03f,
+                        TransformOrigin = "left bottom"
+                    };
+                    myRequest.QrCodeInfo = new QrCodeInfo()
+                    {
+                        Text = "google.com",
+                        Width = 0.1f,
+                        Right = 0.03f,
+                        Top = 0.02f,
+                        TransformOrigin = "right top"
+                    };
+                }
                 try
                 {
                     // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
                     var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiPadesMobile/SignStepOnePadesMobileCoreV2"
                                     .WithHeader("X-API-KEY", _apiKey)
-                                    .PostJsonAsync(
-                                            new SignStepOnePadesMobileCoreRequestV2()
-                                            {
-                                                FileData = fileData,
-                                                OperationId = request.OperationId,
-                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                                DisplayLanguage = "en",
-                                                VerificationInfo = new VerificationInfo()
-                                                {
-                                                    Text = "Bu belge 5070 sayılı elektronik imza kanununa göre güvenli elektronik imza ile imzalanmıştır. Belgeye\r\nhttps://localhost:8082 adresinden 97275466-4A90128E46284E3181CF21020554BFEC452DBDE73",
-                                                    Width = 0.8f,
-                                                    Height = 0.1f,
-                                                    Left = 0.1f,
-                                                    Bottom = 0.03f,
-                                                    TransformOrigin = "left bottom"
-                                                },
-                                                QrCodeInfo = new QrCodeInfo()
-                                                {
-                                                    Text = "google.com",
-                                                    Width = 0.1f,
-                                                    Right = 0.03f,
-                                                    Top = 0.02f,
-                                                    TransformOrigin = "right top"
-                                                },
-                                                PhoneNumber = request.PhoneNumber,
-                                                Operator = request.Operator,
-                                                UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
-                                                CitizenshipNo = request.CitizenshipNo,
-                                                SignatureLevel = request.SignatureLevelForPades,
-                                                SignatureTurkishProfile = request.SignatureTurkishProfile,
-                                            })
+                                    .PostJsonAsync(myRequest)
                                     .ReceiveJson<ApiResult<SignStepOneCoreInternalForPadesMobileResult>>();
 
                     if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
@@ -962,6 +965,51 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             {
                 // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
                 var getSignatureListCoreResult = await $"{_onaylarimServiceUrl}/CoreApiCades/GetSignatureListCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new GetSignatureListCoreRequest()
+                                        {
+                                            OperationId = operationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                        })
+                                .ReceiveJson<ApiResult<GetSignatureListCoreResult>>();
+
+                result.Signatures = getSignatureListCoreResult.Result.Signatures
+                        .Select(x => new GetSignatureListResultItem()
+                        {
+                            ClaimedSigningTime = x.ClaimedSigningTime,
+                            EntityLabel = x.EntityLabel,
+                            Level = x.Level,
+                            LevelString = x.LevelString,
+                            SubjectRDN = x.SubjectRDN,
+                            Timestamped = x.Timestamped,
+                            CitizenshipNo = x.CitizenshipNo
+                        });
+
+                
+
+            }
+            catch (Exception ex)
+            {
+                result.Error = ex.Message;
+            }
+            return result;
+
+        }
+
+        /// <summary>
+        /// Pades imzalı bir belgenin içindeki imzaların bilgisini alır
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetSignatureListPades")]
+        public async Task<GetSignatureListResult> GetSignatureListPades(Guid operationId)
+        {
+            var result = new GetSignatureListResult();
+
+            try
+            {
+                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                var getSignatureListCoreResult = await $"{_onaylarimServiceUrl}/CoreApiPades/GetSignatureListCore"
                                 .WithHeader("X-API-KEY", _apiKey)
                                 .PostJsonAsync(
                                         new GetSignatureListCoreRequest()
