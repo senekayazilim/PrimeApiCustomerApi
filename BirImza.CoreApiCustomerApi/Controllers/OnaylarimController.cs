@@ -567,7 +567,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             else if (request.SignatureType == "pades")
             {
                 // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
-                var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\uni.pdf");
+                var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
 
                 // Yüksek boyutlu pdf dsyalarını imzalama işlemi öncesi sunucuya yükleme yapmak için kullanılır.
                 var uploadFileBeforeOperation = true;
@@ -579,7 +579,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                              .WithHeader("X-API-KEY", _apiKey)
                                              .WithHeader("operationid", operationId)
                                              .PostMultipartAsync(mp => mp
-                                                     .AddFile("file", $@"{_env.ContentRootPath}\Resources\uni.pdf", null, 4096, "uni.pdf")
+                                                     .AddFile("file", $@"{_env.ContentRootPath}\Resources\sample.pdf", null, 4096, "sample.pdf")
                                              )
                                              .ReceiveJson<ApiResult<SignStepOneUploadFileResult>>();
                     if (!string.IsNullOrWhiteSpace(signStepOneUploadFileResult.Error))
