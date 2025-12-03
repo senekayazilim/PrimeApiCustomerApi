@@ -663,7 +663,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                 try
                 {
                     // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiCadesMobile/SignStepOneCadesMobileCoreV2"
+                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiCadesMobile/SignStepOneCadesMobileCore"
                                     .WithHeader("X-API-KEY", _apiKey)
                                     .PostJsonAsync(
                                             new SignStepOneCadesMobileCoreRequestV2()
@@ -778,7 +778,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                 try
                 {
                     // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiPadesMobile/SignStepOnePadesMobileCoreV2"
+                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiPadesMobile/SignStepOnePadesMobileCore"
                                     .WithHeader("X-API-KEY", _apiKey)
                                     .PostJsonAsync(myRequest)
                                     .ReceiveJson<ApiResult<SignStepOneCoreInternalForPadesMobileResult>>();
