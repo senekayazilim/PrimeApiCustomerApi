@@ -706,13 +706,11 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                 try
                 {
                     // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiXadesMobile/SignStepOneXadesMobileCore"
+                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiXadesMobile/SignStepOneXadesMobileCore"
                                     .WithHeader("X-API-KEY", _apiKey)
                                     .PostJsonAsync(
-                                            new SignStepOneXadesMobileCoreRequest()
+                                            new SignStepOneXadesMobileCoreRequestV2()
                                             {
-                                                FileData = fileData,
-                                                SignatureIndex = 0,
                                                 OperationId = request.OperationId,
                                                 RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
                                                 DisplayLanguage = "en",
@@ -720,6 +718,11 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                                 Operator = request.Operator,
                                                 UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
                                                 CitizenshipNo = request.CitizenshipNo,
+                                                SignatureLevel = request.SignatureLevelForXades,
+                                                SignaturePath = request.SignaturePath,
+                                                SignatureTurkishProfile = request.SignatureTurkishProfile,
+                                                SerialOrParallel = request.SerialOrParallel,
+                                                EnvelopingOrEnveloped = request.EnvelopingOrEnveloped
                                             })
                                     .ReceiveJson<ApiResult<SignStepOneCoreInternalForXadesMobileResult>>();
 
@@ -987,6 +990,52 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                         });
 
                 
+
+            }
+            catch (Exception ex)
+            {
+                result.Error = ex.Message;
+            }
+            return result;
+
+        }
+
+        /// <summary>
+        /// Cades imzalı bir belgenin içindeki imzaların bilgisini alır
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetSignatureListXades")]
+        public async Task<GetSignatureListResult> GetSignatureListXades(Guid operationId)
+        {
+            var result = new GetSignatureListResult();
+
+            try
+            {
+                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                var getSignatureListCoreResult = await $"{_onaylarimServiceUrl}/CoreApiXades/GetSignatureListCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new GetSignatureListCoreRequest()
+                                        {
+                                            OperationId = operationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                        })
+                                .ReceiveJson<ApiResult<GetSignatureListCoreResult>>();
+
+                result.Signatures = getSignatureListCoreResult.Result.Signatures
+                        .Select(x => new GetSignatureListResultItem()
+                        {
+                            ClaimedSigningTime = x.ClaimedSigningTime,
+                            EntityLabel = x.EntityLabel,
+                            Level = x.Level,
+                            LevelString = x.LevelString,
+                            SubjectRDN = x.SubjectRDN,
+                            Timestamped = x.Timestamped,
+                            CitizenshipNo = x.CitizenshipNo,
+                            XadesSignatureType = x.XadesSignatureType
+                        });
+
+
 
             }
             catch (Exception ex)

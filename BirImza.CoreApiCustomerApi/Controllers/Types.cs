@@ -187,6 +187,12 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// Sadece PADES imzalar için. Null geçilirse BES türünde atılır.
         /// </summary>
         public SignatureLevelForPades? SignatureLevelForPades { get; set; }
+
+        /// <summary>
+        /// Sadece XADES imzalar için. Null geçilirse BES türünde atılır.
+        /// </summary>
+        public SignatureLevelForXades? SignatureLevelForXades { get; set; }
+
         /// <summary>
         /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
         /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
@@ -218,6 +224,14 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// Bu nedenle eğer IsFirstSigner false ise QR kod alanı eklenmeyecek şekilde süreç çalıştırılır
         /// </summary>
         public bool IsFirstSigner { get; set; }
+
+        /// <summary>
+        /// Enveloping veya Enveloped imza atılıp atılacağını belirler, boş geçilirse Enveloped imza atılır.
+        /// Olası değerler
+        /// ENVELOPING
+        /// ENVELOPED
+        /// </summary>
+        public string EnvelopingOrEnveloped { get; set; }
     }
 
     public class GetSignatureListResult
@@ -238,5 +252,6 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public bool Timestamped { get; set; }
         public string ClaimedSigningTime { get; set; }
         public string? CitizenshipNo { get;  set; }
+        public string? XadesSignatureType { get;  set; }
     }
 }
