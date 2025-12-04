@@ -745,7 +745,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                 // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
                 //var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
 
-                var myRequest= new SignStepOnePadesMobileCoreRequestV2()
+                var myRequest = new SignStepOnePadesMobileCoreRequestV2()
                 {
                     OperationId = request.OperationId,
                     RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
@@ -989,7 +989,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                             CitizenshipNo = x.CitizenshipNo
                         });
 
-                
+
 
             }
             catch (Exception ex)
@@ -1080,7 +1080,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                             CitizenshipNo = x.CitizenshipNo
                         });
 
-                
+
 
             }
             catch (Exception ex)
@@ -1149,6 +1149,56 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                 return Ok(operationId);
 
                 //return File(signStepOneCoreResult.Result.FileData, "application/pdf", "pdf000.pdf");
+
+            }
+            catch (Exception ex)
+            {
+            }
+
+            if (signStepOneCoreResult == null)
+            {
+                return BadRequest("Hata");
+            }
+            else if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
+            {
+                return BadRequest(signStepOneCoreResult.Error);
+            }
+            else if (signStepOneCoreResult.Result.IsSuccess == false)
+            {
+                return BadRequest("Hata");
+            }
+
+
+            return BadRequest("Hata");
+
+        }
+
+        /// <summary>
+        /// Pades imzalı bir belgenin e-imzalarını zenginleştirir
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("UpgradePadesV2")]
+        public async Task<IActionResult> UpgradePadesV2(Guid operationId, int signatureLevel, string signaturePath)
+        {
+            ApiResult<UpgradePadesCoreResult> signStepOneCoreResult = null;
+            try
+            {
+                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                signStepOneCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiPades/UpgradePadesCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new UpgradePadesCoreRequestV2()
+                                        {
+                                            OperationId = operationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                            SignatureLevel = (SignatureLevelForPades)(signatureLevel),
+                                            SignaturePath = signaturePath
+                                        })
+                                .ReceiveJson<ApiResult<UpgradePadesCoreResult>>();
+
+                return Ok(operationId);
+
 
             }
             catch (Exception ex)

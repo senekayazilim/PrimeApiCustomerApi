@@ -909,7 +909,7 @@ namespace  BirImza.Types
         /// <summary>
         /// Ne tür imzaya upgrade edileceği bilgisi
         /// </summary>
-        public SignatureLevelForCades SignatureLevel { get; set; }
+        public SignatureLevelForPades SignatureLevel { get; set; }
 
         /// <summary>
         /// Hangi imzacının upgrade edileceği bilgisi, null geçilirse dosyadaki her imza upgrade edilir
