@@ -100,6 +100,34 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
     }
 
+    public class FinishSignForPadesRequestV2
+    {
+        /// <summary>
+        /// Null geçilirse BES türünde atılır.
+        /// </summary>
+        public SignatureLevelForPades? SignatureLevel { get; set; }
+
+        /// <summary>
+        /// e-İmza aracı tarafından imzalanmış veri
+        /// </summary>
+        public string SignedData { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait ID değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeyId { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait KeySecret değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeySecret { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+      
+
+
+    }
+
     public class FinishSignResult
     {
         /// <summary>

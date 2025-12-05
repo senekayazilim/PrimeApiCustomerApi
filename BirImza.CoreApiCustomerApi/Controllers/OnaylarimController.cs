@@ -466,7 +466,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("FinishSignForPadesV2")]
-        public async Task<FinishSignResult> FinishSignForPadesV2(FinishSignRequest request)
+        public async Task<FinishSignResult> FinishSignForPadesV2(FinishSignForPadesRequestV2 request)
         {
             _logger.LogInformation("FinishSign");
 
@@ -486,7 +486,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                             OperationId = request.OperationId,
                                             RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
                                             DisplayLanguage = "en",
-                                            SignatureLevel = SignatureLevelForPades.paslBES
+                                            SignatureLevel = request.SignatureLevel
                                         })
                                 .ReceiveJson<ApiResult<SignStepThreePadesCoreResult>>();
 
