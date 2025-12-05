@@ -1,4 +1,5 @@
-﻿using BirImza.Types.Shared;
+﻿using BirImza.Types;
+using BirImza.Types.Shared;
 
 namespace BirImza.CoreApiCustomerApi.Controllers
 {
@@ -26,6 +27,14 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// Enveloping imza durumunda, bu özellik, zarf içinde yer alan nesnenin MIME türü (MIME type) özniteliğini içerir. Default değeri application/pdf
         /// </summary>
         public string? EnvelopingObjectMimeType { get; set; }
+    }
+
+    public class CreateStateOnOnaylarimApiForPadesRequestV2
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarında bulunan e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır
+        /// </summary>
+        public string Certificate { get; set; }
     }
 
     public class CreateStateOnOnaylarimApiResult
@@ -253,5 +262,91 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string ClaimedSigningTime { get; set; }
         public string? CitizenshipNo { get;  set; }
         public string? XadesSignatureType { get;  set; }
+    }
+
+    public class AddVerificationInfoCoreRequest 
+    {
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// İmzalanacak doküman üzerinde eklenecek cümleyle ilgili bilgileri içerir
+        /// </summary>
+        public VerificationInfoInner VerificationInfo { get; set; }
+
+        /// <summary>
+        /// İmzalanacak doküman üzerinde eklenecek QRCode ilgili bilgileri içerir
+        /// </summary>
+        public QrCodeInfoInner QrCodeInfo { get; set; }
+    }
+
+    public class QrCodeInfoInner
+    {
+        /// <summary>
+        /// QR kod içinde yazacak URL bilgisidir
+        /// </summary>
+        public string Text { get; set; }
+        /// <summary>
+        /// Karekodun genişliğinin sayfa genişliğine oranıdır. Sayfa genişliği 1000 olan bir sayfa için width değer 0.8 verilirse, karekod genişliği 800 olur. Karekodun genişliği ve yüksekliği eşittir
+        /// </summary>
+        public float Width { get; set; }
+        /// <summary>
+        /// Karekodun sayfanın solundan olan uzaklığıdır. Sayfa genişliği 1000 olan bir sayfa için left değer 0.1 verilirse, karekod sayfanın solundan uzaklığı 100 olur. Left ve Right değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Left { get; set; }
+        /// <summary>
+        /// Karekodun sayfanın sağından olan uzaklığıdır. Sayfa genişliği 1000 olan bir sayfa için right değer 0.1 verilirse, karekod sayfanın sağından uzaklığı 100 olur. Left ve Right değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Right { get; set; }
+        /// <summary>
+        /// Karekodun sayfanın üstünden olan uzaklığıdır. Sayfa yüksekliği 1000 olan bir sayfa için top değer 0.1 verilirse, karekod sayfanın üstünden uzaklığı 100 olur. Top ve Bottom değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Top { get; set; }
+        /// <summary>
+        /// Karekodun sayfanın altından olan uzaklığıdır. Sayfa yüksekliği 1000 olan bir sayfa için bottom değer 0.1 verilirse, karekod sayfanın altından uzaklığı 100 olur. Top ve Bottom değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Bottom { get; set; }
+        // <summary>
+        /// Karekodun lokasyonu için hangi parametrelerin kullanılması gerektiği bilgisidir. Örnekler: "left top", "right top"
+        /// </summary>
+        public string TransformOrigin { get; set; }
+    }
+
+    public class VerificationInfoInner
+    {
+        /// <summary>
+        /// Doğrulama cümlesidir. Yeni satır için \r\n değeri girilebilir. Örnek: Satır 1\r\nSatır2
+        /// </summary>
+        public string Text { get; set; }
+        /// <summary>
+        /// İmzalama cümlesi kutusunun, sayfa genişliğine oranıdır. Sayfa genişliği 1000 olan bir sayfa için width değer 0.8 verilirse, doğrulama cümlesi genişliği 800 olur.
+        /// </summary>
+        public float Width { get; set; }
+        /// <summary>
+        /// İmzalama cümlesi kutusunun, sayfa yüksekliğine oranıdır. Sayfa yüksekliği 1000 olan bir sayfa için height değer 0.1 verilirse, doğrulama cümlesi yüksekliği 100 olur.
+        /// </summary>
+        public float Height { get; set; }
+        /// <summary>
+        /// İmzalama cümlesi kutusunun sayfanın solundan olan uzaklığıdır. Sayfa genişliği 1000 olan bir sayfa için left değer 0.1 verilirse, doğrulama cümlesinin sayfanın solundan uzaklığı 100 olur. Left ve Right değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Left { get; set; }
+        /// <summary>
+        /// İmzalama cümlesi kutusunun sayfanın sağından olan uzaklığıdır. Sayfa genişliği 1000 olan bir sayfa için right değer 0.1 verilirse, doğrulama cümlesinin sayfanın sağından uzaklığı 100 olur. Left ve Right değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Right { get; set; }
+        /// <summary>
+        /// İmzalama cümlesi kutusunun sayfanın üstünden olan uzaklığıdır. Sayfa yüksekliği 1000 olan bir sayfa için top değer 0.1 verilirse, doğrulama cümlesinin sayfanın üstünden uzaklığı 100 olur. Top ve Bottom değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Top { get; set; }
+        /// <summary>
+        /// İmzalama cümlesi kutusunun sayfanın altından olan uzaklığıdır. Sayfa yüksekliği 1000 olan bir sayfa için bottom değer 0.1 verilirse, doğrulama cümlesinin sayfanın altından uzaklığı 100 olur. Top ve Bottom değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Bottom { get; set; }
+        // <summary>
+        /// İmzalama cümlesi kutusunun lokasyonu için hangi parametrelerin kullanılması gerektiği bilgisidir. Örnekler: "left top", "right top"
+        /// </summary>
+        public string TransformOrigin { get; set; }
     }
 }

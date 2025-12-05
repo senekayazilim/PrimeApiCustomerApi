@@ -370,6 +370,138 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         }
 
         /// <summary>
+        /// PADES e-imza atma işlemi için ilk adımdır
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("CreateStateOnOnaylarimApiForPadesV2")]
+        public async Task<CreateStateOnOnaylarimApiResult> CreateStateOnOnaylarimApiForPadesV2(CreateStateOnOnaylarimApiForPadesRequestV2 request)
+        {
+            _logger.LogInformation("CreateStateOnOnaylarimApiV2 start");
+
+            var result = new CreateStateOnOnaylarimApiResult();
+
+            var operationId = Guid.NewGuid();
+
+            try
+            {
+
+                var signatureWidgetBackground = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\Signature01.jpg");
+
+                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiPades/SignStepOnePadesCore"
+                            .WithHeader("X-API-KEY", _apiKey)
+                            .PostJsonAsync(
+                                    new SignStepOnePadesCoreRequestV2()
+                                    {
+                                        CerBytes = request.Certificate,
+                                        OperationId = operationId,
+                                        RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                        DisplayLanguage = "en",
+                                        SignatureWidgetInfo = new SignatureWidgetInfo()
+                                        {
+                                            Width = 100f,
+                                            Height = 50f,
+                                            Left = 0.5f,
+                                            Top = 0.03f,
+                                            TransformOrigin = "left top",
+                                            ImageBytes = signatureWidgetBackground,
+                                            PagesToPlaceOn = new int[] { 0 },
+                                            Lines = new List<LineInfo>()
+                                            {
+                                                    new LineInfo()
+                                                    {
+                                                         BottomMargin=4,
+                                                         ColorHtml="#000000",
+                                                         FontName="Arial",
+                                                         FontSize=10,
+                                                         FontStyle = "Bold",
+                                                         LeftMargin=4,
+                                                         RightMargin=4,
+                                                         Text="Uluç Efe Öztürk",
+                                                         TopMargin=4
+                                                    },
+                                                    new LineInfo()
+                                                    {
+                                                         BottomMargin=4,
+                                                         ColorHtml="#FF0000",
+                                                         FontName="Arial",
+                                                         FontSize=10,
+                                                         FontStyle = "Regular",
+                                                         LeftMargin=4,
+                                                         RightMargin=4,
+                                                         Text="2022-11-11",
+                                                         TopMargin=4
+                                                    }
+                                            }
+                                        }
+                                    })
+                            .ReceiveJson<ApiResult<SignStepOnePadesCoreResult>>();
+
+
+                if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error))
+                {
+                    result.KeyID = signStepOneCoreResult.Result.KeyID;
+                    result.KeySecret = signStepOneCoreResult.Result.KeySecret;
+                    result.State = signStepOneCoreResult.Result.State;
+                    result.OperationId = operationId;
+                }
+                else
+                {
+                    result.Error = signStepOneCoreResult.Error;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CreateStateOnOnaylarimApi");
+            }
+            return result;
+
+        }
+
+        /// <summary>
+        /// PADES e-imza atma işlemi için son adımdır
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("FinishSignForPadesV2")]
+        public async Task<FinishSignResult> FinishSignForPadesV2(FinishSignRequest request)
+        {
+            _logger.LogInformation("FinishSign");
+
+            var result = new FinishSignResult();
+
+            try
+            {
+                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/V2/CoreApiPades/signStepThreePadesCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new SignStepThreePadesCoreRequestV2
+                                        {
+                                            SignedData = request.SignedData,
+                                            KeyId = request.KeyId,
+                                            KeySecret = request.KeySecret,
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                            SignatureLevel = SignatureLevelForPades.paslBES
+                                        })
+                                .ReceiveJson<ApiResult<SignStepThreePadesCoreResult>>();
+
+                result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "FinishSign");
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// CADES, XADES ve PADES e-imza atma işlemi için son adımdır
         /// </summary>
         /// <param name="request"></param>
@@ -470,8 +602,6 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
             return result;
         }
-
-
 
 
         /// <summary>
@@ -863,6 +993,39 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             return BadRequest("Hata");
         }
 
+        /// <summary>
+        /// Dosyayı indirmek için kullanılır
+        /// </summary>
+        /// <param name="operationId"></param>
+        /// <returns></returns>
+        [HttpGet("DownloadFileFromOnaylarimApi")]
+        public async Task<IActionResult> DownloadFileFromOnaylarimApi(Guid operationId, string fileType)
+        {
+
+            try
+            {
+                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                var downloadSignedFileCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiDownload/DownloadCore"
+                                        .WithHeader("X-API-KEY", _apiKey)
+                                        .PostJsonAsync(
+                                            new DownloadSignedFileCoreRequestV2()
+                                            {
+                                                OperationId = operationId,
+                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                                DisplayLanguage = "en",
+                                                FileType = fileType
+                                            })
+                                        .ReceiveJson<ApiResult<DownloadSignedFileCoreResult>>();
+
+                return File(downloadSignedFileCoreResult.Result.FileData, "application/octet-stream", downloadSignedFileCoreResult.Result.FileName);
+
+            }
+            catch (Exception ex)
+            {
+            }
+            return BadRequest("Hata");
+        }
+
 
         /// <summary>
         /// Microsoft Office ve resim dosyalarını pdf'e dönüştürür
@@ -952,6 +1115,72 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             {
             }
             return BadRequest("Hata");
+
+        }
+
+        /// <summary>
+        /// PDF dosyasının üzerine doğrulama cümlesi ve karekod basar
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost("AddLayersV2")]
+        public async Task<IActionResult> AddLayersV2(AddVerificationInfoCoreRequest request)
+        {
+
+            try
+            {
+                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiPdf/AddLayersCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new AddLayersCoreRequestV2()
+                                        {
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                            VerificationInfo = new VerificationInfo()
+                                            {
+                                                Bottom = request.VerificationInfo.Bottom,
+                                                Height = request.VerificationInfo.Height,
+                                                Left = request.VerificationInfo.Left,
+                                                Right = request.VerificationInfo.Right,
+                                                Text = request.VerificationInfo.Text,
+                                                Top = request.VerificationInfo.Top,
+                                                TransformOrigin = request.VerificationInfo.TransformOrigin,
+                                                Width = request.VerificationInfo.Width,
+                                            },
+                                            QrCodeInfo = new QrCodeInfo()
+                                            {
+                                                Bottom = request.QrCodeInfo.Bottom,
+                                                Left = request.QrCodeInfo.Left,
+                                                Right = request.QrCodeInfo.Right,
+                                                Text = request.QrCodeInfo.Text,
+                                                Top = request.QrCodeInfo.Top,
+                                                TransformOrigin = request.QrCodeInfo.TransformOrigin,
+                                                Width = request.QrCodeInfo.Width,
+                                            }
+                                        })
+                                .ReceiveJson<ApiResult<AddLayersCoreResultV2>>();
+
+                if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error))
+                {
+                    return Ok();
+                }
+                return Problem(
+                   detail: signStepOneCoreResult.Error,
+                   title: "Hata",
+                   statusCode: 400
+                 );
+
+            }
+            catch (Exception ex)
+            {
+                return Problem(
+                   detail: ex.Message,
+                   title: "Exception",
+                   statusCode: 400
+                 );
+            }
+
 
         }
 

@@ -690,6 +690,46 @@ namespace  BirImza.Types
         public SignatureWidgetInfo SignatureWidgetInfo { get; set; }
     }
 
+    public class SignStepOnePadesCoreRequestV2 : BaseRequest
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarında bulunana e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır
+        /// </summary>
+        public string CerBytes { get; set; }
+       
+        /// <summary>
+        /// Son kullanıcının geolocation bilgisidir. API bu alanı şimdilik kullanmamaktadır. Bu nedenle null olarak atanabilir.
+        /// </summary>
+        public SignStepOneRequestCoordinates Coordinates { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+        
+        /// <summary>
+        /// Sayfa üzerine eklenecek imza görseli bilgisidir
+        /// </summary>
+        public SignatureWidgetInfo SignatureWidgetInfo { get; set; }
+
+    }
+
+    public class AddLayersCoreRequestV2 : BaseRequest
+    {
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+        
+        /// <summary>
+        /// İmzalanacak doküman üzerinde eklenecek cümleyle ilgili bilgileri içerir
+        /// </summary>
+        public VerificationInfo VerificationInfo { get; set; }
+
+        /// <summary>
+        /// İmzalanacak doküman üzerinde eklenecek QRCode ilgili bilgileri içerir
+        /// </summary>
+        public QrCodeInfo QrCodeInfo { get; set; }
+    }
     public class AddLayersCoreRequest : BaseRequest
     {
         /// <summary>
@@ -739,6 +779,23 @@ namespace  BirImza.Types
         public Guid OperationId { get; set; }
     }
 
+    public class DownloadSignedFileCoreRequestV2 : BaseRequest
+    {
+
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// İşlemle ilgili hangi dosyanın indirileceğini belirler, değer set edilmez ise SIGNEDFILE indirir
+        /// ORIGINAL -- Kullanıcının yüklediği orijinal dosya
+        /// WITHLAYERS -- Layer eklenmiş dosya
+        /// SIGNEDFILE -- İmzalı dosya
+        /// </summary>
+        public string FileType { get; set; }
+    }
+
     public class DownloadSignedFileCoreResult
     {
         /// <summary>
@@ -785,6 +842,10 @@ namespace  BirImza.Types
         /// Üzerine layer eklenmiş dosya verisidir
         /// </summary>
         public byte[] FileData { get; set; }
+    }
+
+    public class AddLayersCoreResultV2
+    {
     }
 
     public class AddLayersToExistingFileCoreResult
@@ -868,6 +929,33 @@ namespace  BirImza.Types
 
     }
 
+    public class SignStepThreePadesCoreRequestV2 : BaseRequest
+    {
+        /// <summary>
+        /// e-İmza aracı tarafından imzalanmış veri
+        /// </summary>
+        public string SignedData { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait ID değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeyId { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait KeySecret değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeySecret { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Null geçilirse BES türünde atılır.
+        /// </summary>
+        public SignatureLevelForPades? SignatureLevel { get; set; }
+
+
+    }
+
     public class SignStepThreeXadesCoreRequest : BaseRequest
     {
         /// <summary>
@@ -897,6 +985,26 @@ namespace  BirImza.Types
         public Guid OperationId { get; set; }
     }
 
+    public class UpgradeCadesCoreRequestV2 : BaseRequest
+    {
+
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+
+        /// <summary>
+        /// Ne tür imzaya upgrade edileceği bilgisi
+        /// </summary>
+        public SignatureLevelForCades SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Hangi imzacının upgrade edileceği bilgisi, null geçilirse dosyadaki her imza upgrade edilir
+        /// </summary>
+        public string? SignaturePath { get; set; }
+    }
+
     public class UpgradePadesCoreRequestV2 : BaseRequest
     {
 
@@ -910,6 +1018,26 @@ namespace  BirImza.Types
         /// Ne tür imzaya upgrade edileceği bilgisi
         /// </summary>
         public SignatureLevelForPades SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Hangi imzacının upgrade edileceği bilgisi, null geçilirse dosyadaki her imza upgrade edilir
+        /// </summary>
+        public string? SignaturePath { get; set; }
+    }
+
+    public class UpgradeXadesCoreRequestV2 : BaseRequest
+    {
+
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+
+        /// <summary>
+        /// Ne tür imzaya upgrade edileceği bilgisi
+        /// </summary>
+        public SignatureLevelForXades SignatureLevel { get; set; }
 
         /// <summary>
         /// Hangi imzacının upgrade edileceği bilgisi, null geçilirse dosyadaki her imza upgrade edilir
