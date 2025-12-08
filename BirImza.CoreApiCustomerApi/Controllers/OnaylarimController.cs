@@ -145,7 +145,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                 {
 
                     // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
-                    var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\uni.pdf");
+                    var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
                     var signatureWidgetBackground = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\Signature01.jpg");
 
                     // Önce uploadFileBeforeOperation'a göre karar ver
