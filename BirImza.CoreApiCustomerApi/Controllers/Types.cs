@@ -3,7 +3,7 @@ using BirImza.Types.Shared;
 
 namespace BirImza.CoreApiCustomerApi.Controllers
 {
-    public class CreateStateOnOnaylarimApiRequest
+    public class ProxyCreateStateOnOnaylarimApiRequest
     {
         /// <summary>
         /// Son kullanıcı bilgisayarında bulunan e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır
@@ -29,15 +29,128 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string? EnvelopingObjectMimeType { get; set; }
     }
 
-    public class CreateStateOnOnaylarimApiForPadesRequestV2
+    public class ProxyCreateStateOnOnaylarimApiForPadesRequestV2
     {
         /// <summary>
         /// Son kullanıcı bilgisayarında bulunan e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır
         /// </summary>
         public string Certificate { get; set; }
+
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
     }
 
-    public class CreateStateOnOnaylarimApiResult
+    public class ProxyCreateStateOnOnaylarimApiForCadesRequestV2
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarında bulunan e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır
+        /// </summary>
+        public string Certificate { get; set; }
+
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+        /// <summary>
+        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse Parallel imza atılır.
+        /// Olası değerler
+        /// SERIAL
+        /// PARALLEL
+        /// </summary>
+        public string SerialOrParallel { get; set; }
+
+        /// <summary>
+        /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
+        /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
+        /// Dosya üzerinde iki tane imza var ise ve ikinci imza üzerine imza atılacaksa S0:S0 gönderilir.
+        /// Parallel imzada bu parametre yok sayılır.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+
+        /// <summary>
+        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+       
+
+        /// <summary>
+        /// İmza profilleri P1, P2, P3, P4. Şuan sadece P4 desteklenmektedir. Profil istenmiyorsa bu alan null geçilir.
+        /// Olası değerler
+        /// P1
+        /// P2
+        /// P3
+        /// P4
+        /// </summary>
+        public string? SignatureTurkishProfile { get; set; }
+    }
+
+    public class ProxyCreateStateOnOnaylarimApiForXadesRequestV2
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarında bulunan e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır
+        /// </summary>
+        public string Certificate { get; set; }
+
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+        /// <summary>
+        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse Parallel imza atılır.
+        /// Olası değerler
+        /// SERIAL
+        /// PARALLEL
+        /// </summary>
+        public string SerialOrParallel { get; set; }
+
+        /// <summary>
+        /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
+        /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
+        /// Dosya üzerinde iki tane imza var ise ve ikinci imza üzerine imza atılacaksa S0:S0 gönderilir.
+        /// Parallel imzada bu parametre yok sayılır.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+
+        /// <summary>
+        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+       
+
+        /// <summary>
+        /// İmza profilleri P1, P2, P3, P4. Şuan sadece P4 desteklenmektedir. Profil istenmiyorsa bu alan null geçilir.
+        /// Olası değerler
+        /// P1
+        /// P2
+        /// P3
+        /// P4
+        /// </summary>
+        public string? SignatureTurkishProfile { get; set; }
+
+        /// <summary>
+        /// Enveloping veya Enveloped imza atılıp atılacağını belirler, boş geçilirse Enveloped imza atılır.
+        /// Olası değerler
+        /// ENVELOPING
+        /// ENVELOPED
+        /// </summary>
+        public string EnvelopingOrEnveloped { get; set; }
+
+        /// <summary>
+        /// application/pdf gibi mimetype değeri verilir. Boş değer verilirse application/pdf kullanılır.
+        /// </summary>
+        public string? EnvelopingObjectMimeType { get; set; }
+
+        /// <summary>
+        /// http://www.w3.org/2000/09/xmldsig#base64 gibi değer verilir. Boş değer verilirse http://www.w3.org/2000/09/xmldsig#base64 kullanılır.
+        /// </summary>
+        public string? EnvelopingObjectEncoding { get; set; }
+    }
+
+    public class ProxyCreateStateOnOnaylarimApiResult
     {
         /// <summary>
         /// e-İmza aracına iletilecek, e-imza state'idir.
@@ -59,17 +172,17 @@ namespace BirImza.CoreApiCustomerApi.Controllers
     }
 
 
-    public class GetFingerPrintRequest
+    public class ProxyGetFingerPrintRequest
     {
         public Guid OperationId { get; set; }
     }
 
-    public class GetFingerPrintResult
+    public class ProxyGetFingerPrintResult
     {
         public string FingerPrint { get; set; }
     }
 
-    public class FinishSignRequest
+    public class ProxyFinishSignRequest
     {
         /// <summary>
         /// İmza işlemi sonrası imzanın LTV'ye upgrade edilip edilmeyeceğini belirler. Belgede N imza olacaksa, 1, 2, 3 ... , N-1 inci imzalar için True, sadece son imza için False gönderilmelidir.
@@ -100,7 +213,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
     }
 
-    public class FinishSignForPadesRequestV2
+    public class ProxyFinishSignForPadesRequestV2
     {
         /// <summary>
         /// Null geçilirse BES türünde atılır.
@@ -128,15 +241,76 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
     }
 
-    public class FinishSignResult
+    public class ProxyFinishSignForCadesRequestV2
+    {
+        /// <summary>
+        /// Null geçilirse BES türünde atılır.
+        /// </summary>
+        public SignatureLevelForCades? SignatureLevel { get; set; }
+
+        /// <summary>
+        /// e-İmza aracı tarafından imzalanmış veri
+        /// </summary>
+        public string SignedData { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait ID değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeyId { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait KeySecret değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeySecret { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+
+
+    }
+
+    public class ProxyFinishSignForXadesRequestV2
+    {
+        /// <summary>
+        /// Null geçilirse BES türünde atılır.
+        /// </summary>
+        public SignatureLevelForXades? SignatureLevel { get; set; }
+
+        /// <summary>
+        /// e-İmza aracı tarafından imzalanmış veri
+        /// </summary>
+        public string SignedData { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait ID değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeyId { get; set; }
+        /// <summary>
+        /// Mevcut e-imza işlemine ait KeySecret değeridir. e-İmza aracına iletilir.
+        /// </summary>
+        public string KeySecret { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+
+
+    }
+
+    public class ProxyFinishSignResult
     {
         /// <summary>
         /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
         /// </summary>
         public bool IsSuccess { get; set; }
+
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public object OperationId { get;  set; }
     }
 
-    public class MobilSignResult
+    public class ProxyMobilSignResult
     {
         /// <summary>
         /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
@@ -148,7 +322,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string Error { get; set; }
     }
 
-    public class UploadFileResult
+    public class ProxyUploadFileResult
     {
         /// <summary>
         /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
@@ -164,7 +338,27 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string Error { get; set; }
     }
 
-    public class MobileSignRequest
+    public class ProxyUploadFileResultV2
+    {
+        /// <summary>
+        /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
+        /// </summary>
+        public bool IsSuccess { get; set; }
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+        /// <summary>
+        /// Hata var ise detay bilgisi döner.
+        /// </summary>
+        public string Error { get; set; }
+
+        
+    }
+
+
+
+    public class ProxyMobileSignRequest
     {
         /// <summary>
         /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
@@ -191,7 +385,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         
     }
 
-    public class MobileSignRequestV2
+    public class ProxyMobileSignRequestV2
     {
         /// <summary>
         /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
@@ -271,16 +465,16 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string EnvelopingOrEnveloped { get; set; }
     }
 
-    public class GetSignatureListResult
+    public class ProxyGetSignatureListResult
     {
         /// <summary>
         /// Hata var ise detay bilgisi döner.
         /// </summary>
         public string Error { get; set; }
-        public IEnumerable<GetSignatureListResultItem> Signatures { get; set; }
+        public IEnumerable<ProxyGetSignatureListResultItem> Signatures { get; set; }
     }
 
-    public class GetSignatureListResultItem
+    public class ProxyGetSignatureListResultItem
     {
         public string EntityLabel { get; set; }
         public int Level { get; set; }
@@ -292,7 +486,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string? XadesSignatureType { get;  set; }
     }
 
-    public class AddVerificationInfoCoreRequest 
+    public class ProxyAddVerificationInfoCoreRequest 
     {
         /// <summary>
         /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
@@ -302,15 +496,15 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// <summary>
         /// İmzalanacak doküman üzerinde eklenecek cümleyle ilgili bilgileri içerir
         /// </summary>
-        public VerificationInfoInner VerificationInfo { get; set; }
+        public ProxyVerificationInfoInner VerificationInfo { get; set; }
 
         /// <summary>
         /// İmzalanacak doküman üzerinde eklenecek QRCode ilgili bilgileri içerir
         /// </summary>
-        public QrCodeInfoInner QrCodeInfo { get; set; }
+        public ProxyQrCodeInfoInner QrCodeInfo { get; set; }
     }
 
-    public class QrCodeInfoInner
+    public class ProxyQrCodeInfoInner
     {
         /// <summary>
         /// QR kod içinde yazacak URL bilgisidir
@@ -342,7 +536,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string TransformOrigin { get; set; }
     }
 
-    public class VerificationInfoInner
+    public class ProxyVerificationInfoInner
     {
         /// <summary>
         /// Doğrulama cümlesidir. Yeni satır için \r\n değeri girilebilir. Örnek: Satır 1\r\nSatır2

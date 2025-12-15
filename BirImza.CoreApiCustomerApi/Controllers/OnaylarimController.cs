@@ -1,21 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
+﻿using BirImza.Types;
+using BirImza.Types.Shared;
 using Flurl.Http;
-using System.IO;
-using System.Text.Json;
-using System.Xml;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics.Metrics;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using BirImza.Types;
-using BirImza.Types.Shared;
+using System.Text.Json;
+using System.Xml;
+using static System.Net.WebRequestMethods;
 
 namespace BirImza.CoreApiCustomerApi.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class OnaylarimController : ControllerBase
+    public partial class OnaylarimController : ControllerBase
     {
         private readonly ILogger<OnaylarimController> _logger;
         private IWebHostEnvironment _env;
@@ -45,11 +46,11 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("CreateStateOnOnaylarimApi")]
-        public async Task<CreateStateOnOnaylarimApiResult> CreateStateOnOnaylarimApi(CreateStateOnOnaylarimApiRequest request)
+        public async Task<ProxyCreateStateOnOnaylarimApiResult> CreateStateOnOnaylarimApi(ProxyCreateStateOnOnaylarimApiRequest request)
         {
             _logger.LogInformation("CreateStateOnOnaylarimApi start");
 
-            var result = new CreateStateOnOnaylarimApiResult();
+            var result = new ProxyCreateStateOnOnaylarimApiResult();
 
             var operationId = Guid.NewGuid();
 
@@ -369,137 +370,9 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
         }
 
-        /// <summary>
-        /// PADES e-imza atma işlemi için ilk adımdır
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        [HttpPost("CreateStateOnOnaylarimApiForPadesV2")]
-        public async Task<CreateStateOnOnaylarimApiResult> CreateStateOnOnaylarimApiForPadesV2(CreateStateOnOnaylarimApiForPadesRequestV2 request)
-        {
-            _logger.LogInformation("CreateStateOnOnaylarimApiV2 start");
+       
 
-            var result = new CreateStateOnOnaylarimApiResult();
-
-            var operationId = Guid.NewGuid();
-
-            try
-            {
-
-                var signatureWidgetBackground = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\Signature01.jpg");
-
-                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/CoreApiPades/SignStepOnePadesCore"
-                            .WithHeader("X-API-KEY", _apiKey)
-                            .PostJsonAsync(
-                                    new SignStepOnePadesCoreRequestV2()
-                                    {
-                                        CerBytes = request.Certificate,
-                                        OperationId = operationId,
-                                        RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                        DisplayLanguage = "en",
-                                        SignatureWidgetInfo = new SignatureWidgetInfo()
-                                        {
-                                            Width = 100f,
-                                            Height = 50f,
-                                            Left = 0.5f,
-                                            Top = 0.03f,
-                                            TransformOrigin = "left top",
-                                            ImageBytes = signatureWidgetBackground,
-                                            PagesToPlaceOn = new int[] { 0 },
-                                            Lines = new List<LineInfo>()
-                                            {
-                                                    new LineInfo()
-                                                    {
-                                                         BottomMargin=4,
-                                                         ColorHtml="#000000",
-                                                         FontName="Arial",
-                                                         FontSize=10,
-                                                         FontStyle = "Bold",
-                                                         LeftMargin=4,
-                                                         RightMargin=4,
-                                                         Text="Uluç Efe Öztürk",
-                                                         TopMargin=4
-                                                    },
-                                                    new LineInfo()
-                                                    {
-                                                         BottomMargin=4,
-                                                         ColorHtml="#FF0000",
-                                                         FontName="Arial",
-                                                         FontSize=10,
-                                                         FontStyle = "Regular",
-                                                         LeftMargin=4,
-                                                         RightMargin=4,
-                                                         Text="2022-11-11",
-                                                         TopMargin=4
-                                                    }
-                                            }
-                                        }
-                                    })
-                            .ReceiveJson<ApiResult<SignStepOnePadesCoreResult>>();
-
-
-                if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error))
-                {
-                    result.KeyID = signStepOneCoreResult.Result.KeyID;
-                    result.KeySecret = signStepOneCoreResult.Result.KeySecret;
-                    result.State = signStepOneCoreResult.Result.State;
-                    result.OperationId = operationId;
-                }
-                else
-                {
-                    result.Error = signStepOneCoreResult.Error;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "CreateStateOnOnaylarimApi");
-            }
-            return result;
-
-        }
-
-        /// <summary>
-        /// PADES e-imza atma işlemi için son adımdır
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        [HttpPost("FinishSignForPadesV2")]
-        public async Task<FinishSignResult> FinishSignForPadesV2(FinishSignForPadesRequestV2 request)
-        {
-            _logger.LogInformation("FinishSign");
-
-            var result = new FinishSignResult();
-
-            try
-            {
-                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/V2/CoreApiPades/signStepThreePadesCore"
-                                .WithHeader("X-API-KEY", _apiKey)
-                                .PostJsonAsync(
-                                        new SignStepThreePadesCoreRequestV2
-                                        {
-                                            SignedData = request.SignedData,
-                                            KeyId = request.KeyId,
-                                            KeySecret = request.KeySecret,
-                                            OperationId = request.OperationId,
-                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                            DisplayLanguage = "en",
-                                            SignatureLevel = request.SignatureLevel
-                                        })
-                                .ReceiveJson<ApiResult<SignStepThreePadesCoreResult>>();
-
-                result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "FinishSign");
-            }
-
-            return result;
-        }
+       
 
         /// <summary>
         /// CADES, XADES ve PADES e-imza atma işlemi için son adımdır
@@ -507,11 +380,11 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("FinishSign")]
-        public async Task<FinishSignResult> FinishSign(FinishSignRequest request)
+        public async Task<ProxyFinishSignResult> FinishSign(ProxyFinishSignRequest request)
         {
             _logger.LogInformation("FinishSign");
 
-            var result = new FinishSignResult();
+            var result = new ProxyFinishSignResult();
 
             if (request.SignatureType == "cades")
             {
@@ -610,9 +483,9 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("MobileSign")]
-        public async Task<MobilSignResult> MobileSign(MobileSignRequest request)
+        public async Task<ProxyMobilSignResult> MobileSign(ProxyMobileSignRequest request)
         {
-            var result = new MobilSignResult();
+            var result = new ProxyMobilSignResult();
 
             var operationId = Guid.NewGuid();
 
@@ -775,169 +648,12 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
         }
 
-        /// <summary>
-        /// Mobil imza atma işlemi için kullanılan metoddur
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        [HttpPost("MobileSignV2")]
-        public async Task<MobilSignResult> MobileSignV2(MobileSignRequestV2 request)
-        {
-            var result = new MobilSignResult();
-
-            if (request.SignatureType == "cades")
-            {
-                // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
-                //var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
-
-                try
-                {
-                    // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiCadesMobile/SignStepOneCadesMobileCore"
-                                    .WithHeader("X-API-KEY", _apiKey)
-                                    .PostJsonAsync(
-                                            new SignStepOneCadesMobileCoreRequestV2()
-                                            {
-                                                //FileData = fileData,
-                                                OperationId = request.OperationId,
-                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                                DisplayLanguage = "en",
-                                                PhoneNumber = request.PhoneNumber,
-                                                Operator = request.Operator,
-                                                UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
-                                                CitizenshipNo = request.CitizenshipNo,
-                                                SignatureLevel = request.SignatureLevelForCades,
-                                                SignaturePath = request.SignaturePath,
-                                                SignatureTurkishProfile = request.SignatureTurkishProfile,
-                                                SerialOrParallel = request.SerialOrParallel
-
-                                            })
-                                    .ReceiveJson<ApiResult<SignStepOneCoreInternalForCadesMobileResult>>();
-
-                    if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
-                    {
-                        result.Error = signStepOneCoreResult.Error;
-                    }
-                    else
-                    {
-                        result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    result.Error = ex.Message;
-                }
-            }
-            else if (request.SignatureType == "xades")
-            {
-                // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
-                var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.xml");
-
-                try
-                {
-                    // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiXadesMobile/SignStepOneXadesMobileCore"
-                                    .WithHeader("X-API-KEY", _apiKey)
-                                    .PostJsonAsync(
-                                            new SignStepOneXadesMobileCoreRequestV2()
-                                            {
-                                                OperationId = request.OperationId,
-                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                                DisplayLanguage = "en",
-                                                PhoneNumber = request.PhoneNumber,
-                                                Operator = request.Operator,
-                                                UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
-                                                CitizenshipNo = request.CitizenshipNo,
-                                                SignatureLevel = request.SignatureLevelForXades,
-                                                SignaturePath = request.SignaturePath,
-                                                SignatureTurkishProfile = request.SignatureTurkishProfile,
-                                                SerialOrParallel = request.SerialOrParallel,
-                                                EnvelopingOrEnveloped = request.EnvelopingOrEnveloped
-                                            })
-                                    .ReceiveJson<ApiResult<SignStepOneCoreInternalForXadesMobileResult>>();
-
-                    if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
-                    {
-                        result.Error = signStepOneCoreResult.Error;
-                    }
-                    else
-                    {
-                        result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    result.Error = ex.Message;
-                }
-            }
-            else if (request.SignatureType == "pades")
-            {
-                // İmzalanacak dosyayı kendi bilgisayarınızda bulunan bir pdf olarak ayarlayınız
-                //var fileData = System.IO.File.ReadAllBytes($@"{_env.ContentRootPath}\Resources\sample.pdf");
-
-                var myRequest = new SignStepOnePadesMobileCoreRequestV2()
-                {
-                    OperationId = request.OperationId,
-                    RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                    DisplayLanguage = "en",
-                    PhoneNumber = request.PhoneNumber,
-                    Operator = request.Operator,
-                    UserPrompt = "CoreAPI ile belge imzalayacaksınız.",
-                    CitizenshipNo = request.CitizenshipNo,
-                    SignatureLevel = request.SignatureLevelForPades,
-                    SignatureTurkishProfile = request.SignatureTurkishProfile,
-                };
-
-                if (request.IsFirstSigner)
-                {
-                    myRequest.VerificationInfo = new VerificationInfo()
-                    {
-                        Text = "Bu belge 5070 sayılı elektronik imza kanununa göre güvenli elektronik imza ile imzalanmıştır. Belgeye\r\nhttps://localhost:8082 adresinden 97275466-4A90128E46284E3181CF21020554BFEC452DBDE73",
-                        Width = 0.8f,
-                        Height = 0.1f,
-                        Left = 0.1f,
-                        Bottom = 0.03f,
-                        TransformOrigin = "left bottom"
-                    };
-                    myRequest.QrCodeInfo = new QrCodeInfo()
-                    {
-                        Text = "google.com",
-                        Width = 0.1f,
-                        Right = 0.03f,
-                        Top = 0.02f,
-                        TransformOrigin = "right top"
-                    };
-                }
-                try
-                {
-                    // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                    var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiPadesMobile/SignStepOnePadesMobileCore"
-                                    .WithHeader("X-API-KEY", _apiKey)
-                                    .PostJsonAsync(myRequest)
-                                    .ReceiveJson<ApiResult<SignStepOneCoreInternalForPadesMobileResult>>();
-
-                    if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
-                    {
-                        result.Error = signStepOneCoreResult.Error;
-                    }
-                    else
-                    {
-                        result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    result.Error = ex.Message;
-                }
-            }
-            return result;
-
-        }
+      
 
         [HttpPost("GetFingerPrint")]
-        public async Task<GetFingerPrintResult> GetFingerPrint(GetFingerPrintRequest request)
+        public async Task<ProxyGetFingerPrintResult> GetFingerPrint(ProxyGetFingerPrintRequest request)
         {
-            var result = new GetFingerPrintResult();
+            var result = new ProxyGetFingerPrintResult();
             try
             {
                 // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
@@ -973,10 +689,10 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             try
             {
                 // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                var downloadSignedFileCoreResult = await $"{_onaylarimServiceUrl}/CoreApiDownload/downloadSignedFileCore"
+                var downloadSignedFileCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiFile/DownloadCore"
                                         .WithHeader("X-API-KEY", _apiKey)
                                         .PostJsonAsync(
-                                            new DownloadSignedFileCoreRequest()
+                                            new DownloadSignedFileCoreRequestV2()
                                             {
                                                 OperationId = operationId,
                                                 RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
@@ -993,38 +709,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             return BadRequest("Hata");
         }
 
-        /// <summary>
-        /// Dosyayı indirmek için kullanılır
-        /// </summary>
-        /// <param name="operationId"></param>
-        /// <returns></returns>
-        [HttpGet("DownloadFileFromOnaylarimApi")]
-        public async Task<IActionResult> DownloadFileFromOnaylarimApi(Guid operationId, string fileType)
-        {
-
-            try
-            {
-                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                var downloadSignedFileCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiDownload/DownloadCore"
-                                        .WithHeader("X-API-KEY", _apiKey)
-                                        .PostJsonAsync(
-                                            new DownloadSignedFileCoreRequestV2()
-                                            {
-                                                OperationId = operationId,
-                                                RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                                DisplayLanguage = "en",
-                                                FileType = fileType
-                                            })
-                                        .ReceiveJson<ApiResult<DownloadSignedFileCoreResult>>();
-
-                return File(downloadSignedFileCoreResult.Result.FileData, "application/octet-stream", downloadSignedFileCoreResult.Result.FileName);
-
-            }
-            catch (Exception ex)
-            {
-            }
-            return BadRequest("Hata");
-        }
+       
 
 
         /// <summary>
@@ -1118,207 +803,13 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
         }
 
-        /// <summary>
-        /// PDF dosyasının üzerine doğrulama cümlesi ve karekod basar
-        /// </summary>
-        /// <returns></returns>
-        [HttpPost("AddLayersV2")]
-        public async Task<IActionResult> AddLayersV2(AddVerificationInfoCoreRequest request)
-        {
+      
 
-            try
-            {
-                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiPdf/AddLayersCore"
-                                .WithHeader("X-API-KEY", _apiKey)
-                                .PostJsonAsync(
-                                        new AddLayersCoreRequestV2()
-                                        {
-                                            OperationId = request.OperationId,
-                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                            DisplayLanguage = "en",
-                                            VerificationInfo = new VerificationInfo()
-                                            {
-                                                Bottom = request.VerificationInfo.Bottom,
-                                                Height = request.VerificationInfo.Height,
-                                                Left = request.VerificationInfo.Left,
-                                                Right = request.VerificationInfo.Right,
-                                                Text = request.VerificationInfo.Text,
-                                                Top = request.VerificationInfo.Top,
-                                                TransformOrigin = request.VerificationInfo.TransformOrigin,
-                                                Width = request.VerificationInfo.Width,
-                                            },
-                                            QrCodeInfo = new QrCodeInfo()
-                                            {
-                                                Bottom = request.QrCodeInfo.Bottom,
-                                                Left = request.QrCodeInfo.Left,
-                                                Right = request.QrCodeInfo.Right,
-                                                Text = request.QrCodeInfo.Text,
-                                                Top = request.QrCodeInfo.Top,
-                                                TransformOrigin = request.QrCodeInfo.TransformOrigin,
-                                                Width = request.QrCodeInfo.Width,
-                                            }
-                                        })
-                                .ReceiveJson<ApiResult<AddLayersCoreResultV2>>();
+       
 
-                if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error))
-                {
-                    return Ok();
-                }
-                return Problem(
-                   detail: signStepOneCoreResult.Error,
-                   title: "Hata",
-                   statusCode: 400
-                 );
+      
 
-            }
-            catch (Exception ex)
-            {
-                return Problem(
-                   detail: ex.Message,
-                   title: "Exception",
-                   statusCode: 400
-                 );
-            }
-
-
-        }
-
-        /// <summary>
-        /// Cades imzalı bir belgenin içindeki imzaların bilgisini alır
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("GetSignatureListCades")]
-        public async Task<GetSignatureListResult> GetSignatureListCades(Guid operationId)
-        {
-            var result = new GetSignatureListResult();
-
-            try
-            {
-                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                var getSignatureListCoreResult = await $"{_onaylarimServiceUrl}/CoreApiCades/GetSignatureListCore"
-                                .WithHeader("X-API-KEY", _apiKey)
-                                .PostJsonAsync(
-                                        new GetSignatureListCoreRequest()
-                                        {
-                                            OperationId = operationId,
-                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                        })
-                                .ReceiveJson<ApiResult<GetSignatureListCoreResult>>();
-
-                result.Signatures = getSignatureListCoreResult.Result.Signatures
-                        .Select(x => new GetSignatureListResultItem()
-                        {
-                            ClaimedSigningTime = x.ClaimedSigningTime,
-                            EntityLabel = x.EntityLabel,
-                            Level = x.Level,
-                            LevelString = x.LevelString,
-                            SubjectRDN = x.SubjectRDN,
-                            Timestamped = x.Timestamped,
-                            CitizenshipNo = x.CitizenshipNo
-                        });
-
-
-
-            }
-            catch (Exception ex)
-            {
-                result.Error = ex.Message;
-            }
-            return result;
-
-        }
-
-        /// <summary>
-        /// Cades imzalı bir belgenin içindeki imzaların bilgisini alır
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("GetSignatureListXades")]
-        public async Task<GetSignatureListResult> GetSignatureListXades(Guid operationId)
-        {
-            var result = new GetSignatureListResult();
-
-            try
-            {
-                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                var getSignatureListCoreResult = await $"{_onaylarimServiceUrl}/CoreApiXades/GetSignatureListCore"
-                                .WithHeader("X-API-KEY", _apiKey)
-                                .PostJsonAsync(
-                                        new GetSignatureListCoreRequest()
-                                        {
-                                            OperationId = operationId,
-                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                        })
-                                .ReceiveJson<ApiResult<GetSignatureListCoreResult>>();
-
-                result.Signatures = getSignatureListCoreResult.Result.Signatures
-                        .Select(x => new GetSignatureListResultItem()
-                        {
-                            ClaimedSigningTime = x.ClaimedSigningTime,
-                            EntityLabel = x.EntityLabel,
-                            Level = x.Level,
-                            LevelString = x.LevelString,
-                            SubjectRDN = x.SubjectRDN,
-                            Timestamped = x.Timestamped,
-                            CitizenshipNo = x.CitizenshipNo,
-                            XadesSignatureType = x.XadesSignatureType
-                        });
-
-
-
-            }
-            catch (Exception ex)
-            {
-                result.Error = ex.Message;
-            }
-            return result;
-
-        }
-
-        /// <summary>
-        /// Pades imzalı bir belgenin içindeki imzaların bilgisini alır
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("GetSignatureListPades")]
-        public async Task<GetSignatureListResult> GetSignatureListPades(Guid operationId)
-        {
-            var result = new GetSignatureListResult();
-
-            try
-            {
-                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                var getSignatureListCoreResult = await $"{_onaylarimServiceUrl}/CoreApiPades/GetSignatureListCore"
-                                .WithHeader("X-API-KEY", _apiKey)
-                                .PostJsonAsync(
-                                        new GetSignatureListCoreRequest()
-                                        {
-                                            OperationId = operationId,
-                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                        })
-                                .ReceiveJson<ApiResult<GetSignatureListCoreResult>>();
-
-                result.Signatures = getSignatureListCoreResult.Result.Signatures
-                        .Select(x => new GetSignatureListResultItem()
-                        {
-                            ClaimedSigningTime = x.ClaimedSigningTime,
-                            EntityLabel = x.EntityLabel,
-                            Level = x.Level,
-                            LevelString = x.LevelString,
-                            SubjectRDN = x.SubjectRDN,
-                            Timestamped = x.Timestamped,
-                            CitizenshipNo = x.CitizenshipNo
-                        });
-
-
-
-            }
-            catch (Exception ex)
-            {
-                result.Error = ex.Message;
-            }
-            return result;
-
-        }
+      
 
         /// <summary>
         /// Pades imzalı bir belgenin e-imzalarını zenginleştirir
@@ -1402,55 +893,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
         }
 
-        /// <summary>
-        /// Pades imzalı bir belgenin e-imzalarını zenginleştirir
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("UpgradePadesV2")]
-        public async Task<IActionResult> UpgradePadesV2(Guid operationId, int signatureLevel, string signaturePath)
-        {
-            ApiResult<UpgradePadesCoreResult> signStepOneCoreResult = null;
-            try
-            {
-                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
-                signStepOneCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiPades/UpgradePadesCore"
-                                .WithHeader("X-API-KEY", _apiKey)
-                                .PostJsonAsync(
-                                        new UpgradePadesCoreRequestV2()
-                                        {
-                                            OperationId = operationId,
-                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
-                                            DisplayLanguage = "en",
-                                            SignatureLevel = (SignatureLevelForPades)(signatureLevel),
-                                            SignaturePath = signaturePath
-                                        })
-                                .ReceiveJson<ApiResult<UpgradePadesCoreResult>>();
-
-                return Ok(operationId);
-
-
-            }
-            catch (Exception ex)
-            {
-            }
-
-            if (signStepOneCoreResult == null)
-            {
-                return BadRequest("Hata");
-            }
-            else if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error) == false)
-            {
-                return BadRequest(signStepOneCoreResult.Error);
-            }
-            else if (signStepOneCoreResult.Result.IsSuccess == false)
-            {
-                return BadRequest("Hata");
-            }
-
-
-            return BadRequest("Hata");
-
-        }
+      
 
         /// <summary>
         /// Pades imzalı bir belgenin e-imzalarını zenginleştirir
@@ -1593,9 +1036,9 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         }
 
         [HttpPost("UploadFile")]
-        public async Task<UploadFileResult> UploadFile([FromForm] IFormFile file)
+        public async Task<ProxyUploadFileResult> UploadFile([FromForm] IFormFile file)
         {
-            var result = new UploadFileResult();
+            var result = new ProxyUploadFileResult();
 
             if (file == null || file.Length == 0)
             {
@@ -1638,6 +1081,9 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
             return result;
         }
+
+
+      
 
     }
 
