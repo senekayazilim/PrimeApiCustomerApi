@@ -1,9 +1,12 @@
-﻿using BirImza.Types;
+﻿using System;
+using BirImza.CoreApiCustomerApi.Configuration;
+using BirImza.Types;
 using BirImza.Types.Shared;
 using Flurl.Http;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Diagnostics.Metrics;
 using System.IO;
 using System.Net.Http;
@@ -25,20 +28,40 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// Bu adresi test ortamı için https://apitest.onaylarim.com olarak değiştirmelisiniz
         /// </summary>
 
-        //private readonly string _onaylarimServiceUrl = "https://api.onaylarim.com";
-        //private readonly string _apiKey = "06636691b3fa491e96b66d88ead994b73c25e649c2805e13b00a1e";
+        
 
-        private readonly string _onaylarimServiceUrl = "https://localhost:44337";
-        private readonly string _apiKey = "0cff5a746a714868b2c1484acfc8b99af4a75cd294ac4a71ade420f4a22470ec";
+        private readonly string _onaylarimServiceUrl;
+        private readonly string _apiKey;
 
         //private readonly string _onaylarimServiceUrl = "https://apitest.onaylarim.com";
         //private readonly string _apiKey = "0cff5a746a714868b2c148294ac4a71ade420f4a22470ec";
 
 
-        public OnaylarimController(IWebHostEnvironment env, ILogger<OnaylarimController> logger)
+        public OnaylarimController(
+            IWebHostEnvironment env,
+            ILogger<OnaylarimController> logger,
+            IOptions<OnaylarimApiOptions> onaylarimOptions)
         {
             _env = env;
             _logger = logger;
+            var options = onaylarimOptions?.Value ?? throw new ArgumentNullException(nameof(onaylarimOptions));
+
+            if (string.IsNullOrWhiteSpace(options.BaseUrl))
+            {
+                throw new InvalidOperationException("OnaylarimApi:BaseUrl configuration value is missing.");
+            }
+
+            if (string.IsNullOrWhiteSpace(options.ApiKey))
+            {
+                throw new InvalidOperationException("OnaylarimApi:ApiKey configuration value is missing.");
+            }
+
+
+            _onaylarimServiceUrl = options.BaseUrl;
+            _apiKey = options.ApiKey;
+
+            _logger.LogInformation($"OnaylarimApi:BaseUrl: {_onaylarimServiceUrl}");
+            _logger.LogInformation($"OnaylarimApi:ApiKey: {_apiKey}");
         }
         /// <summary>
         /// CADES, XADES ve PADES e-imza atma işlemi için ilk adımdır

@@ -12,6 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+builder.Services.Configure<BirImza.CoreApiCustomerApi.Configuration.OnaylarimApiOptions>(
+    builder.Configuration.GetSection("OnaylarimApi"));
+
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
 
