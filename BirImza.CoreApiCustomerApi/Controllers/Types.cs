@@ -571,4 +571,6 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// </summary>
         public string TransformOrigin { get; set; }
     }
+
+    
 }

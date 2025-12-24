@@ -17,10 +17,10 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 {
     public partial class OnaylarimController : ControllerBase
     {
-        private int chunkSize = 8 * 1024 * 1024; // 8MB
+        private int chunkSize = 80 * 1024 * 1024; // 8MB
 
-        [RequestSizeLimit(200L * 1024 * 1024)]           // 200 MB
-        [RequestFormLimits(MultipartBodyLengthLimit = 200L * 1024 * 1024)]
+        [RequestSizeLimit(1200L * 1024 * 1024)]           // 200 MB
+        [RequestFormLimits(MultipartBodyLengthLimit = 1200L * 1024 * 1024)]
         [HttpPost("UploadFileV2")]
         public async Task<ProxyUploadFileResultV2> UploadFileV2([FromForm] IFormFile file)
         {
@@ -1081,6 +1081,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                 .ReceiveJson<ApiResult<SignStepThreePadesCoreResult>>();
 
                 result.IsSuccess = signStepThreePadesCoreResult.Result.IsSuccess;
+                result.OperationId = signStepThreePadesCoreResult.Result.OperationId;
 
             }
             catch (Exception ex)
@@ -1157,6 +1158,59 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                             DisplayLanguage = "en",
                                             SignatureLevel = (SignatureLevelForPades)(signatureLevel),
                                             SignaturePath = signaturePath
+                                        })
+                                .ReceiveJson<ApiResult<UpgradePadesCoreResult>>();
+
+                if (string.IsNullOrWhiteSpace(upgradePadesCoreResult.Error) == false)
+                {
+                    return BadRequest("İmza zenginleştirilemedi. Hata: " + upgradePadesCoreResult.Error);
+                }
+                if (upgradePadesCoreResult.Result.IsSuccess == false)
+                {
+                    return BadRequest("İmza zenginleştirilemedi.");
+                }
+
+                return Ok(upgradePadesCoreResult.Result.OperationId);
+
+
+            }
+            catch (Exception ex)
+            {
+            }
+
+            if (upgradePadesCoreResult == null)
+            {
+                return BadRequest("Hata");
+            }
+            else if (string.IsNullOrWhiteSpace(upgradePadesCoreResult.Error) == false)
+            {
+                return BadRequest(upgradePadesCoreResult.Error);
+            }
+            else if (upgradePadesCoreResult.Result.IsSuccess == false)
+            {
+                return BadRequest("Hata");
+            }
+
+
+            return BadRequest("Hata");
+
+        }
+
+        [HttpGet("VerifyPadesV2")]
+        public async Task<IActionResult> VerifyPadesV2(Guid operationId)
+        {
+            ApiResult<UpgradePadesCoreResult> upgradePadesCoreResult = null;
+            try
+            {
+                // Size verilen API key'i "X-API-KEY değeri olarak ayarlayınız
+                upgradePadesCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiVerification/VerifyPades"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new VerifyPadesV2()
+                                        {
+                                            OperationId = operationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
                                         })
                                 .ReceiveJson<ApiResult<UpgradePadesCoreResult>>();
 

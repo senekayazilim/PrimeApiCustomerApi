@@ -1214,6 +1214,17 @@ namespace  BirImza.Types
         public string? SignaturePath { get; set; }
     }
 
+    public class VerifyPadesV2 : BaseRequest
+    {
+
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+       
+    }
+
     public class UpgradeXadesCoreRequestV2 : BaseRequest
     {
 
@@ -1913,6 +1924,32 @@ namespace  BirImza.Types
         /// Varsa hataya ilişkin mesaj ve açıklayıcı bilgi dönülür
         /// </summary>
         public string Error { get; set; }
+    }
+
+    /// <summary>
+    /// Chunk status sorgulama yanıtı.
+    /// </summary>
+    public class GetUploadStatusResult
+    {
+        /// <summary>
+        /// Toplam parça sayısı.
+        /// </summary>
+        public int TotalChunks { get; set; }
+        /// <summary>
+        /// Sunucuya ulaşmış parça indeksleri listesi (0 tabanlı).
+        /// </summary>
+        public List<int> ReceivedChunkIndices { get; set; }
+    }
+
+    /// <summary>
+    /// Chunk status sorgulama isteği.
+    /// </summary>
+    public class GetUploadStatusRequest : BaseRequest
+    {
+        /// <summary>
+        /// InitializeChunkedUpload çağrısından dönen UploadSessionId.
+        /// </summary>
+        public Guid UploadSessionId { get; set; }
     }
 
 }
