@@ -322,6 +322,19 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string Error { get; set; }
     }
 
+    public class ProxyMobilSignResultV2
+    {
+        /// <summary>
+        /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
+        /// </summary>
+        public bool IsSuccess { get; set; }
+        /// <summary>
+        /// Hata var ise detay bilgisi döner.
+        /// </summary>
+        public string Error { get; set; }
+        public Guid OperationId { get;  set; }
+    }
+
     public class ProxyUploadFileResult
     {
         /// <summary>

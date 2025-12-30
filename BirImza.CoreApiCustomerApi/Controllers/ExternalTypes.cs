@@ -1214,7 +1214,7 @@ namespace  BirImza.Types
         public string? SignaturePath { get; set; }
     }
 
-    public class VerifyPadesV2 : BaseRequest
+    public class VerifyPadesV2Request : BaseRequest
     {
 
         /// <summary>
@@ -1223,6 +1223,38 @@ namespace  BirImza.Types
         public Guid OperationId { get; set; }
 
        
+    }
+
+    public class VerifyPadesV2Result : BaseRequest
+    {
+
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
+        /// </summary>
+        public Guid OperationId { get; set; }
+        public bool AllSignaturesValid { get; set; }
+
+        public List<VerifyPadesV2ResultItem> Signatures { get; set; }
+    }
+
+    public class VerifyPadesV2ResultItem : BaseRequest
+    {
+
+        public string ValidatedSigningTime { get; set; }
+        public string ChainValidationResult { get; set; }
+        public string ClaimedSigningTime { get; set; }
+        public bool ContainsLongTermInfo { get; set; }
+        public string HashAlgorithm { get; set; }
+        public string IssuerRDN { get; set; }
+        public string Level { get; set; }
+        public string PolicyHash { get; set; }
+        public string PolicyHashAlgorithm { get; set; }
+        public string PolicyID { get; set; }
+        public string PolicyURI { get; set; }
+        public string Reason { get; set; }
+        public string SignatureType { get; set; }
+        public string SubjectRDN { get; set; }
+        public bool Timestamped { get; set; }
     }
 
     public class UpgradeXadesCoreRequestV2 : BaseRequest

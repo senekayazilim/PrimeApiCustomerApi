@@ -25,10 +25,11 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         private IWebHostEnvironment _env;
 
         /// <summary>
+        /// Değerleri buradan değil appsettings dosyasından değiştiriniz.
         /// Bu adresi test ortamı için https://apitest.onaylarim.com olarak değiştirmelisiniz
         /// </summary>
 
-        
+
 
         private readonly string _onaylarimServiceUrl;
         private readonly string _apiKey;

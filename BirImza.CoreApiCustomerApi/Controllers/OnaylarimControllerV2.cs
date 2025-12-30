@@ -362,9 +362,9 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("MobileSignV2")]
-        public async Task<ProxyMobilSignResult> MobileSignV2(ProxyMobileSignRequestV2 request)
+        public async Task<ProxyMobilSignResultV2> MobileSignV2(ProxyMobileSignRequestV2 request)
         {
-            var result = new ProxyMobilSignResult();
+            var result = new ProxyMobilSignResultV2();
 
             if (request.SignatureType == "cades")
             {
@@ -402,6 +402,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                     else
                     {
                         result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+                        result.OperationId = signStepOneCoreResult.Result.OperationId;
                     }
                 }
                 catch (Exception ex)
@@ -444,6 +445,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                     else
                     {
                         result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+                        result.OperationId = signStepOneCoreResult.Result.OperationId;
                     }
                 }
                 catch (Exception ex)
@@ -485,6 +487,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                     else
                     {
                         result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+                        result.OperationId = signStepOneCoreResult.Result.OperationId;
                     }
                 }
                 catch (Exception ex)
@@ -1206,7 +1209,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                 upgradePadesCoreResult = await $"{_onaylarimServiceUrl}/v2/CoreApiVerification/VerifyPades"
                                 .WithHeader("X-API-KEY", _apiKey)
                                 .PostJsonAsync(
-                                        new VerifyPadesV2()
+                                        new VerifyPadesV2Result()
                                         {
                                             OperationId = operationId,
                                             RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
