@@ -94,25 +94,7 @@ namespace  BirImza.Types
 
     }
 
-    public class SignStepOneCoreInternalForXadesRequest : BaseRequest
-    {
-        public string CerBytes { get; set; }
-
-        /// <summary>
-        /// Enveloping:2, Enveloped:4. Değer verilmez ise 4, yani Enveloped imza atılır.
-        /// </summary>
-        public int? XmlSignatureType { get; set; }
-
-        /// <summary>
-        /// Enveloping imza durumunda, bu özellik, zarf içinde yer alan nesnenin Encoding (kodlama) özniteliğini içerir. Default değeri http://www.w3.org/2000/09/xmldsig#base64
-        /// </summary>
-        public string? EnvelopingObjectEncoding { get; set; }
-        /// <summary>
-        /// Enveloping imza durumunda, bu özellik, zarf içinde yer alan nesnenin MIME türü (MIME type) özniteliğini içerir. Default değeri application/pdf
-        /// </summary>
-        public string? EnvelopingObjectMimeType { get; set; }
-    }
-
+   
     public class SignStepOneXadesCoreRequest : BaseRequest
     {
         /// <summary>
@@ -153,11 +135,7 @@ namespace  BirImza.Types
 
     }
 
-    public class SignStepOneCoreInternalForCadesRequest : BaseRequest
-    {
-        public string CerBytes { get; set; }
-    }
-
+    
     public class GetSignatureListCoreRequest : BaseRequest
     {
         
@@ -225,7 +203,7 @@ namespace  BirImza.Types
         /// SERIAL
         /// PARALLEL
         /// </summary>
-        public string SerialOrParallel { get; set; }
+        public string? SerialOrParallel { get; set; }
 
         /// <summary>
         /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
@@ -277,7 +255,7 @@ namespace  BirImza.Types
         /// SERIAL
         /// PARALLEL
         /// </summary>
-        public string SerialOrParallel { get; set; }
+        public string? SerialOrParallel { get; set; }
 
         /// <summary>
         /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
@@ -430,7 +408,7 @@ namespace  BirImza.Types
         /// SERIAL
         /// PARALLEL
         /// </summary>
-        public string SerialOrParallel { get; set; }
+        public string? SerialOrParallel { get; set; }
     }
 
     public class SignStepOneXadesMobileCoreRequestV2 : BaseRequest
@@ -494,7 +472,7 @@ namespace  BirImza.Types
         /// SERIAL
         /// PARALLEL
         /// </summary>
-        public string SerialOrParallel { get; set; }
+        public string? SerialOrParallel { get; set; }
 
         /// <summary>
         /// Enveloping veya Enveloped imza atılıp atılacağını belirler, boş geçilirse Enveloped imza atılır.
@@ -547,225 +525,16 @@ namespace  BirImza.Types
 
     }
 
-    public class SignStepOneCoreInternalForPadesMobileRequest : BaseRequest
-    {
-        public string InputFilePath { get; set; }
-        public string OutputFilePath { get; set; }
-        public string PhoneNumber { get; set; }
-        public string UserPrompt { get; set; }
-        /// <summary>
-        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
-        /// </summary>
-        public Guid OperationId { get; set; }
-        public string OperatorName { get; set; }
-        /// <summary>
-        /// Dosya üzerinde kaçıncı imza olduğu bilgisidir. Dosya üzerinde hiç imza yok ise 0 değeri atanır.
-        /// </summary>
-        public int SignatureIndex { get; set; }
+    
+   
 
-        /// <summary>
-        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
-        /// </summary>
-        public string? CitizenshipNo { get; set; }
-    }
+   
 
-    public class SignStepOneCoreInternalForPadesMobileRequestV2 : BaseRequest
-    {
-        public string InputFilePath { get; set; }
-        public string OutputFilePath { get; set; }
-        public string PhoneNumber { get; set; }
-        public string UserPrompt { get; set; }
-        /// <summary>
-        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
-        /// </summary>
-        public Guid OperationId { get; set; }
-        public string OperatorName { get; set; }
-        ///// <summary>
-        ///// Dosya üzerinde kaçıncı imza olduğu bilgisidir. Dosya üzerinde hiç imza yok ise 0 değeri atanır.
-        ///// </summary>
-        //public int SignatureIndex { get; set; }
+    
 
-        /// <summary>
-        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
-        /// </summary>
-        public string? CitizenshipNo { get; set; }
+   
 
-        /// <summary>
-        /// Null geçilirse BES türünde atılır.
-        /// </summary>
-        public SignatureLevelForPades? SignatureLevel { get; set; }
-
-        /// <summary>
-        /// İmza profilleri P1, P2, P3, P4. Şuan sadece P4 desteklenmektedir. Profil istenmiyorsa bu alan null geçilir.
-        /// Olası değerler
-        /// P1
-        /// P2
-        /// P3
-        /// P4
-        /// </summary>
-        public string? SignatureTurkishProfile { get; set; }
-
-        
-    }
-
-    public class SignStepOneCoreInternalForCadesMobileRequest : BaseRequest
-    {
-        public string InputFilePath { get; set; }
-        public string OutputFilePath { get; set; }
-        public string PhoneNumber { get; set; }
-        public string UserPrompt { get; set; }
-        /// <summary>
-        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
-        /// </summary>
-        public Guid OperationId { get; set; }
-        public string OperatorName { get; set; }
-        /// <summary>
-        /// Dosya üzerinde kaçıncı imza olduğu bilgisidir. Dosya üzerinde hiç imza yok ise 0 değeri atanır.
-        /// </summary>
-        public int SignatureIndex { get; set; }
-
-        /// <summary>
-        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
-        /// </summary>
-        public string? CitizenshipNo { get; set; }
-
-        /// <summary>
-        /// Null geçilirse BES türünde atılır.
-        /// </summary>
-        public SignatureLevelForCades? SignatureLevel { get; set; }
-    }
-
-    public class SignStepOneCoreInternalForCadesMobileRequestV2 : BaseRequest
-    {
-        public string InputFilePath { get; set; }
-        public string OutputFilePath { get; set; }
-        public string PhoneNumber { get; set; }
-        public string UserPrompt { get; set; }
-        /// <summary>
-        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
-        /// </summary>
-        public Guid OperationId { get; set; }
-        public string OperatorName { get; set; }
-
-        /// <summary>
-        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse Parallel imza atılır.
-        /// Olası değerler
-        /// SERIAL
-        /// PARALLEL
-        /// </summary>
-        public string SerialOrParallel { get; set; }
-
-        /// <summary>
-        /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
-        /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
-        /// Dosya üzerinde iki tane imza var ise ve ikinci imza üzerine imza atılacaksa S0:S0 gönderilir.
-        /// Parallel imzada bu parametre yok sayılır.
-        /// </summary>
-        public string? SignaturePath { get; set; }
-
-        /// <summary>
-        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
-        /// </summary>
-        public string? CitizenshipNo { get; set; }
-
-        /// <summary>
-        /// Null geçilirse BES türünde atılır.
-        /// </summary>
-        public SignatureLevelForCades? SignatureLevel { get; set; }
-
-        /// <summary>
-        /// İmza profilleri P1, P2, P3, P4. Şuan sadece P4 desteklenmektedir. Profil istenmiyorsa bu alan null geçilir.
-        /// Olası değerler
-        /// P1
-        /// P2
-        /// P3
-        /// P4
-        /// </summary>
-        public string? SignatureTurkishProfile { get; set; }
-        
-    }
-
-    public class SignStepOneCoreInternalForXadesMobileRequestV2 : BaseRequest
-    {
-        /// <summary>
-        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
-        /// </summary>
-        public Guid OperationId { get; set; }
-
-        public string InputFilePath { get; set; }
-        public string OutputFilePath { get; set; }
-        public string PhoneNumber { get; set; }
-        public string UserPrompt { get; set; }
-        
-        public string OperatorName { get; set; }
-
-        /// <summary>
-        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse Parallel imza atılır.
-        /// Olası değerler
-        /// SERIAL
-        /// PARALLEL
-        /// </summary>
-        public string SerialOrParallel { get; set; }
-
-        /// <summary>
-        /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir. Dosya üzerinde hiç imza yoksa boş geçilir.
-        /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
-        /// Dosya üzerinde iki tane imza var ise ve ikinci imza üzerine imza atılacaksa S0:S0 gönderilir.
-        /// Parallel imzada bu parametre yok sayılır.
-        /// </summary>
-        public string? SignaturePath { get; set; }
-
-        /// <summary>
-        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
-        /// </summary>
-        public string? CitizenshipNo { get; set; }
-
-        /// <summary>
-        /// Null geçilirse BES türünde atılır.
-        /// </summary>
-        public SignatureLevelForXades? SignatureLevel { get; set; }
-
-        /// <summary>
-        /// İmza profilleri P1, P2, P3, P4. Şuan sadece P4 desteklenmektedir. Profil istenmiyorsa bu alan null geçilir.
-        /// Olası değerler
-        /// P1
-        /// P2
-        /// P3
-        /// P4
-        /// </summary>
-        public string? SignatureTurkishProfile { get; set; }
-
-        /// <summary>
-        /// Enveloping veya Enveloped imza atılıp atılacağını belirler, boş geçilirse Enveloped imza atılır.
-        /// Olası değerler
-        /// ENVELOPING
-        /// ENVELOPED
-        /// </summary>
-        public string EnvelopingOrEnveloped { get; set; }
-        
-    }
-
-    public class SignStepOneCoreInternalForXadesMobileRequest : BaseRequest
-    {
-        public string InputFilePath { get; set; }
-        public string OutputFilePath { get; set; }
-        public string PhoneNumber { get; set; }
-        public string UserPrompt { get; set; }
-        /// <summary>
-        /// Her bir istek için tekil bir GUID değeri verilmelidir. Bu değer aynı e-imza işlemi ile ilgili olarak daha sonraki metodlarda kullanılır.
-        /// </summary>
-        public Guid OperationId { get; set; }
-        public string OperatorName { get; set; }
-        /// <summary>
-        /// Dosya üzerinde kaçıncı imza olduğu bilgisidir. Dosya üzerinde hiç imza yok ise 0 değeri atanır.
-        /// </summary>
-        public int SignatureIndex { get; set; }
-
-        /// <summary>
-        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
-        /// </summary>
-        public string? CitizenshipNo { get; set; }
-    }
+    
     public class SignStepOnePadesCoreRequest : BaseRequest
     {
 
@@ -1383,12 +1152,7 @@ namespace  BirImza.Types
 
 
 
-    public class SignStepOneCoreInternalForPadesResult
-    {
-        public string State { get; set; }
-        public string KeyID { get; set; }
-        public string KeySecret { get; set; }
-    }
+    
 
     public class JavaPadesValidationResult
     {
@@ -1542,7 +1306,6 @@ namespace  BirImza.Types
         
     }
 
-    
 
     public class SignStepOneCoreInternalForCadesMobileResult
     {
@@ -1556,8 +1319,24 @@ namespace  BirImza.Types
         /// </summary>
         public Guid OperationId { get; set; }
 
-        
+
     }
+
+    public class SignStepOneCoreForCadesMobileResultV2
+    {
+        /// <summary>
+        /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
+        /// </summary>
+        public bool IsSuccess { get; set; }
+
+        /// <summary>
+        /// Sunucu tarafından oluşturulmuş OperationId'dir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+
+    }
+
 
     public class SignStepOneCoreInternalForPadesMobileResult
     {

@@ -459,7 +459,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// SERIAL
         /// PARALLEL
         /// </summary>
-        public string SerialOrParallel { get; set; }
+        public string? SerialOrParallel { get; set; }
 
 
         /// <summary>
