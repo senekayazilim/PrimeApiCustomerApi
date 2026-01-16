@@ -487,6 +487,15 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public IEnumerable<ProxyGetSignatureListResultItem> Signatures { get; set; }
     }
 
+    public class ProxyGetSignatureListResultV3
+    {
+        /// <summary>
+        /// Hata var ise detay bilgisi döner.
+        /// </summary>
+        public string Error { get; set; }
+        public IEnumerable<ProxyGetSignatureListResultItemV3> Signatures { get; set; }
+    }
+
     public class ProxyGetSignatureListResultItem
     {
         public string EntityLabel { get; set; }
@@ -497,6 +506,28 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string ClaimedSigningTime { get; set; }
         public string? CitizenshipNo { get;  set; }
         public string? XadesSignatureType { get;  set; }
+    }
+
+    public class ProxyGetSignatureListResultItemV3
+    {
+        public string EntityLabel { get; set; }
+        public int Level { get; set; }
+        public string LevelString { get; set; }
+        public string SubjectRDN { get; set; }
+        public bool Timestamped { get; set; }
+        public string ClaimedSigningTime { get; set; }
+        public string? CitizenshipNo { get; set; }
+        public string? XadesSignatureType { get; set; }
+        public ProxyTimestampInfoItemV3? Timestamp { get;  set; }
+        public string ParentEntity { get;  set; }
+        public DateTime? ClaimedSigningTimeAsTime { get;  set; }
+    }
+
+    public class ProxyTimestampInfoItemV3
+    {
+        public string EntityLabel { get; set; }
+        public string Time { get; set; }
+        public DateTime? TimeAsTime { get; set; }
     }
 
     public class ProxyAddVerificationInfoCoreRequest 

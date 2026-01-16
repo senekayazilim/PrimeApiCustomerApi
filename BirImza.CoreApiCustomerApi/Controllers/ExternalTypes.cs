@@ -1138,6 +1138,15 @@ namespace  BirImza.Types
         public Guid OperationId { get; set; }
     }
 
+    public class GetSignatureListCoreV3Result
+    {
+
+        public IEnumerable<GetSignatureListCoreResultItemV3> Signatures { get; set; }
+        public Guid OperationId { get; set; }
+    }
+
+  
+
     public class GetSignatureListCoreResultItem
     {
         public string EntityLabel { get; set; }
@@ -1148,6 +1157,31 @@ namespace  BirImza.Types
         public string ClaimedSigningTime { get; set; }
         public string? CitizenshipNo { get; set; }
         public string? XadesSignatureType { get; set; }
+        //public int Scope { get; set; }
+        //public string ParentEntity { get; set; }
+    }
+
+    public class GetSignatureListCoreResultItemV3
+    {
+        public string EntityLabel { get; set; }
+        public int Level { get; set; }
+        public string LevelString { get; set; }
+        public string SubjectRDN { get; set; }
+        public bool Timestamped { get; set; }
+        public string ClaimedSigningTime { get; set; }
+        public DateTime? ClaimedSigningTimeAsTime { get; set; }
+        public string? CitizenshipNo { get; set; }
+        public string? XadesSignatureType { get; set; }
+        public int Scope { get; set; }
+        public string ParentEntity { get; set; }
+        public TimestampInfoItem? Timestamp { get; set; }
+    }
+
+    public class TimestampInfoItem
+    {
+        public string EntityLabel { get; set; }
+        public string Time { get; set; }
+        public DateTime? TimeAsTime { get; set; }
     }
 
 
