@@ -1,6 +1,7 @@
 ﻿using BirImza.Types.Shared;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace  BirImza.Types
 {
@@ -1006,6 +1007,7 @@ namespace  BirImza.Types
         public List<VerifyPadesV2ResultItem> Signatures { get; set; }
     }
 
+   
     public class VerifyPadesV2ResultItem : BaseRequest
     {
 
@@ -1184,9 +1186,17 @@ namespace  BirImza.Types
         public DateTime? TimeAsTime { get; set; }
     }
 
+    public class JavaXadesValidationResult
+    {
+        public List<SignatureValidationItem> signatureValidations { get; set; }
+
+        /// <summary>
+        /// ALL_VALID, CONTAINS_INVALID, CONTAINS_INCOMPLETE 
+        /// </summary>
+        public string summary { get; set; }
+    }
 
 
-    
 
     public class JavaPadesValidationResult
     {
@@ -1795,6 +1805,252 @@ namespace  BirImza.Types
         /// InitializeChunkedUpload çağrısından dönen UploadSessionId.
         /// </summary>
         public Guid UploadSessionId { get; set; }
+    }
+
+    /// <summary>
+    /// CoreApi V2 istatistik sorgulama isteği.
+    /// Çağıran API key, kendi organizasyonundaki tüm API key'lerin istatistiklerini görebilir.
+    /// </summary>
+    public class GetCoreApiStatsRequest : BaseRequest
+    {
+        /// <summary>
+        /// Başlangıç tarihi filtresi (opsiyonel). Belirtilirse bu tarihten itibaren olan işlemler dahil edilir.
+        /// </summary>
+        public DateTime? StartDate { get; set; }
+
+        /// <summary>
+        /// Bitiş tarihi filtresi (opsiyonel). Belirtilirse bu tarihe kadar olan işlemler dahil edilir.
+        /// </summary>
+        public DateTime? EndDate { get; set; }
+    }
+
+    /// <summary>
+    /// CoreApi V2 istatistik sonucu. Organizasyon geneli özet ve API key bazlı kırılım içerir.
+    /// </summary>
+    public class GetCoreApiStatsResult
+    {
+        /// <summary>
+        /// Organizasyon adı
+        /// </summary>
+        public string OrganizationName { get; set; }
+
+        /// <summary>
+        /// Uygulanan başlangıç tarihi filtresi
+        /// </summary>
+        public DateTime? StartDate { get; set; }
+
+        /// <summary>
+        /// Uygulanan bitiş tarihi filtresi
+        /// </summary>
+        public DateTime? EndDate { get; set; }
+
+        /// <summary>
+        /// Organizasyon genelindeki toplam işlem sayısı
+        /// </summary>
+        public int TotalOperationCount { get; set; }
+
+        /// <summary>
+        /// Organizasyon genelindeki toplam hatalı işlem sayısı
+        /// </summary>
+        public int TotalErrorCount { get; set; }
+
+        /// <summary>
+        /// Organizasyon genelindeki toplam dosya boyutu (byte)
+        /// </summary>
+        public long TotalFileSizeBytes { get; set; }
+
+        /// <summary>
+        /// API key bazlı istatistik kırılımı
+        /// </summary>
+        public List<ApiUserStatsItem> ApiUserStats { get; set; }
+    }
+
+    /// <summary>
+    /// Tek bir API key (uygulama) için istatistik özeti.
+    /// </summary>
+    public class ApiUserStatsItem
+    {
+        /// <summary>
+        /// API kullanıcısının Id'si
+        /// </summary>
+        public int ApiUserId { get; set; }
+
+        /// <summary>
+        /// API kullanıcısının adı
+        /// </summary>
+        public string ApiUserName { get; set; }
+
+        /// <summary>
+        /// API kullanıcısının aktif olup olmadığı
+        /// </summary>
+        public bool IsActive { get; set; }
+
+        /// <summary>
+        /// Bu API key ile yapılan toplam işlem sayısı
+        /// </summary>
+        public int TotalOperationCount { get; set; }
+
+        /// <summary>
+        /// Bu API key ile yapılan toplam hatalı işlem sayısı
+        /// </summary>
+        public int TotalErrorCount { get; set; }
+
+        /// <summary>
+        /// Bu API key ile işlenen toplam dosya boyutu (byte)
+        /// </summary>
+        public long TotalFileSizeBytes { get; set; }
+
+        /// <summary>
+        /// İşlem tipi bazlı detaylı kırılım
+        /// </summary>
+        public List<OperationTypeStatsItem> OperationDetails { get; set; }
+    }
+
+    /// <summary>
+    /// Belirli bir işlem tipi için istatistik detayı.
+    /// </summary>
+    public class OperationTypeStatsItem
+    {
+        
+        /// <summary>
+        /// İşlem tipinin açıklaması (örn. "Pades İmza Başlatma")
+        /// </summary>
+        public string OperationTypeDescription { get; set; }
+
+        /// <summary>
+        /// Bu işlem tipindeki toplam işlem sayısı
+        /// </summary>
+        public int Count { get; set; }
+
+        /// <summary>
+        /// Bu işlem tipindeki hatalı işlem sayısı
+        /// </summary>
+        public int ErrorCount { get; set; }
+
+        /// <summary>
+        /// Bu işlem tipindeki toplam dosya boyutu (byte)
+        /// </summary>
+        public long TotalFileSizeBytes { get; set; }
+    }
+
+    /// <summary>
+    /// CoreApi V2 işlem detayları sorgulama isteği.
+    /// Sayfalama ve filtreleme destekler.
+    /// </summary>
+    public class GetCoreApiOperationsRequest : BaseRequest
+    {
+        /// <summary>
+        /// Başlangıç tarihi filtresi (opsiyonel)
+        /// </summary>
+        public DateTime? StartDate { get; set; }
+
+        /// <summary>
+        /// Bitiş tarihi filtresi (opsiyonel)
+        /// </summary>
+        public DateTime? EndDate { get; set; }
+
+        /// <summary>
+        /// Belirli bir API kullanıcısına ait işlemleri filtrelemek için (opsiyonel)
+        /// </summary>
+        public int? ApiUserId { get; set; }
+
+        /// <summary>
+        /// Belirli bir işlem tipine göre filtrelemek için (opsiyonel)
+        /// </summary>
+        public int? OperationType { get; set; }
+
+        /// <summary>
+        /// Sadece hatalı veya başarılı işlemleri filtrelemek için (opsiyonel). 
+        /// true = sadece hatalılar, false = sadece başarılılar, null = tümü
+        /// </summary>
+        public bool? HasError { get; set; }
+
+        /// <summary>
+        /// Sayfa numarası (1 tabanlı). Varsayılan: 1
+        /// </summary>
+        public int Page { get; set; } = 1;
+
+        /// <summary>
+        /// Sayfa başı kayıt sayısı. Varsayılan: 50, Maksimum: 200
+        /// </summary>
+        public int PageSize { get; set; } = 50;
+    }
+
+    /// <summary>
+    /// CoreApi V2 işlem detayları sonucu. Sayfalanmış işlem listesi içerir.
+    /// </summary>
+    public class GetCoreApiOperationsResult
+    {
+        /// <summary>
+        /// Filtrelere uyan toplam kayıt sayısı
+        /// </summary>
+        public int TotalCount { get; set; }
+
+        /// <summary>
+        /// Mevcut sayfa numarası
+        /// </summary>
+        public int Page { get; set; }
+
+        /// <summary>
+        /// Sayfa başı kayıt sayısı
+        /// </summary>
+        public int PageSize { get; set; }
+
+        /// <summary>
+        /// İşlem kayıtları listesi
+        /// </summary>
+        public List<CoreApiOperationItem> Operations { get; set; }
+    }
+
+    /// <summary>
+    /// Tek bir CoreApi V2 işlem kaydı.
+    /// </summary>
+    public class CoreApiOperationItem
+    {
+        /// <summary>
+        /// İşlem kimliği (GUID)
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// API kullanıcısının Id'si
+        /// </summary>
+        public int ApiUserId { get; set; }
+
+        /// <summary>
+        /// API kullanıcısının adı
+        /// </summary>
+        public string ApiUserName { get; set; }
+
+        /// <summary>
+        /// İşlem tipi enum değeri
+        /// </summary>
+        public int OperationType { get; set; }
+
+        /// <summary>
+        /// İşlem tipinin açıklaması
+        /// </summary>
+        public string OperationTypeDescription { get; set; }
+
+        /// <summary>
+        /// İşlem tarihi
+        /// </summary>
+        public DateTime CreatedDate { get; set; }
+
+        /// <summary>
+        /// İşlemde hata oluşup oluşmadığı
+        /// </summary>
+        public bool HasError { get; set; }
+
+        /// <summary>
+        /// Hata mesajı (varsa)
+        /// </summary>
+        public string Error { get; set; }
+
+        /// <summary>
+        /// Çıktı dosyası boyutu (byte, varsa)
+        /// </summary>
+        public long? OutputFileSize { get; set; }
     }
 
 }

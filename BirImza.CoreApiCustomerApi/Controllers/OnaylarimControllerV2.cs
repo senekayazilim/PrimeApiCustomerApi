@@ -1,4 +1,4 @@
-﻿using BirImza.Types;
+using BirImza.Types;
 using BirImza.Types.Shared;
 using Flurl.Http;
 using Microsoft.AspNetCore.Components.Forms;
@@ -1254,8 +1254,125 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
         #endregion
 
+        #region Stats
+
+        /// <summary>
+        /// Çağıran API key'in organizasyonundaki tüm API key'lerin CoreApi V2 işlem istatistiklerini döner.
+        /// İşlem tipi ve API key bazlı kırılım içerir. Opsiyonel tarih filtresi destekler.
+        /// </summary>
+        [HttpPost("GetStats")]
+        public async Task<ProxyGetCoreApiStatsResult> GetStats([FromBody] ProxyGetCoreApiStatsRequest request)
+        {
+            var result= new ProxyGetCoreApiStatsResult();
+
+            try
+            {
+                var getCoreApiStatsRequest = new GetCoreApiStatsRequest();
+                getCoreApiStatsRequest.DisplayLanguage = "en";
+                getCoreApiStatsRequest.RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21);
+                getCoreApiStatsRequest.EndDate = request.EndDate;
+                getCoreApiStatsRequest.StartDate = request.StartDate;
 
 
+                var response = await $"{_onaylarimServiceUrl}/V2/CoreApiStats/GetStats"
+                    .WithHeader("X-API-KEY", _apiKey)
+                    .PostJsonAsync(getCoreApiStatsRequest)
+                    .ReceiveJson<ApiResult<ProxyGetCoreApiStatsResult>>();
+
+                result= new ProxyGetCoreApiStatsResult()
+                {
+                    OrganizationName = response.Result.OrganizationName,
+                    StartDate = response.Result.StartDate,
+                    EndDate = response.Result.EndDate,
+                    TotalOperationCount = response.Result.TotalOperationCount,
+                    TotalErrorCount = response.Result.TotalErrorCount,
+                    TotalFileSizeBytes = response.Result.TotalFileSizeBytes,
+                    ApiUserStats = response.Result.ApiUserStats.Select(x => new ProxyApiUserStatsItem()
+                    {
+                        ApiUserId = x.ApiUserId,
+                        ApiUserName = x.ApiUserName,
+                        IsActive = x.IsActive,
+                        TotalOperationCount = x.TotalOperationCount,
+                        TotalErrorCount = x.TotalErrorCount,
+                        TotalFileSizeBytes = x.TotalFileSizeBytes,
+                        OperationDetails = x.OperationDetails.Select(y => new ProxyOperationTypeStatsItem()
+                        {
+                            OperationTypeDescription = y.OperationTypeDescription,
+                            Count = y.Count,
+                            ErrorCount = y.ErrorCount,
+                            TotalFileSizeBytes = y.TotalFileSizeBytes
+                        }).ToList()
+                    }).ToList()
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetStats failed");
+                
+            }
+
+            return result;
+        }
+
+        #endregion
+
+
+        #region Operations
+
+        /// <summary>
+        /// CoreApi V2 işlem detaylarını (sayfalı) döner. Tarih, kullanıcı, işlem tipi ve hata filtresi destekler.
+        /// </summary>
+        [HttpPost("GetOperations")]
+        public async Task<ProxyGetCoreApiOperationsResult> GetOperations([FromBody] ProxyGetCoreApiOperationsRequest request)
+        {
+            var result = new ProxyGetCoreApiOperationsResult();
+            try
+            {
+                var getCoreApiOperationsRequest = new GetCoreApiOperationsRequest
+                {
+                    DisplayLanguage = "en",
+                    RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                    StartDate = request.StartDate,
+                    EndDate = request.EndDate,
+                    ApiUserId = request.ApiUserId,
+                    OperationType = request.OperationType,
+                    HasError = request.HasError
+                    // Page and PageSize left as defaults (1 and 50) if not provided via proxy
+                };
+
+                var response = await $"{_onaylarimServiceUrl}/V2/CoreApiStats/GetOperations"
+                    .WithHeader("X-API-KEY", _apiKey)
+                    .PostJsonAsync(getCoreApiOperationsRequest)
+                    .ReceiveJson<ApiResult<GetCoreApiOperationsResult>>();
+
+                if (response?.Result != null)
+                {
+                    result.TotalCount = response.Result.TotalCount;
+                    result.Page = response.Result.Page;
+                    result.PageSize = response.Result.PageSize;
+                    result.Operations = response.Result.Operations?.Select(op => new ProxyCoreApiOperationItem
+                    {
+                        OperationId = op.OperationId,
+                        ApiUserId = op.ApiUserId,
+                        ApiUserName = op.ApiUserName,
+                        OperationType = op.OperationType,
+                        OperationTypeDescription = op.OperationTypeDescription,
+                        CreatedDate = op.CreatedDate,
+                        HasError = op.HasError,
+                        Error = op.Error,
+                        OutputFileSize = op.OutputFileSize
+                    }).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetOperations failed");
+            }
+
+            return result;
+        }
+
+        #endregion
 
 
     }
