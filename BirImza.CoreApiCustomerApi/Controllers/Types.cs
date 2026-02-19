@@ -863,6 +863,309 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public long? OutputFileSize { get; set; }
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // V4 CAdES PROXY MODELLERİ
+    // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// V4 CAdES e-imza atma işlemi için ilk adım isteği.
+    /// Sunucu tarafında hash hesaplanır, istemci bu hash'i imzalar.
+    /// </summary>
+    public class ProxyCreateStateOnOnaylarimApiForCadesRequestV4
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarında bulunan e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır (Base64 DER veya PEM).
+        /// </summary>
+        public string Certificate { get; set; }
+
+        /// <summary>
+        /// Her bir istek için tekil bir GUID değeri verilmelidir. Önceden upload edilmiş dosyanın OperationId'sidir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse PARALLEL imza atılır.
+        /// Olası değerler: SERIAL, PARALLEL
+        /// </summary>
+        public string? SerialOrParallel { get; set; }
+
+        /// <summary>
+        /// Seri imzada üzerine imza atılacak imzanın EntityLabel'ı (örn: S0, S0:S0).
+        /// Boş bırakılırsa son imza üzerine atılır. Parallel imzada yok sayılır.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+
+        /// <summary>
+        /// Hedef imza seviyesi. SignStepThree'de bu seviyeye upgrade edilir.
+        /// </summary>
+        public SignatureLevelForCadesV4 SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Türk imza profili. EPES gerektiren seviyeler için zorunlu.
+        /// None veya P1: profilsiz BES tabanlı imza. P2/P3/P4: EPES tabanlı imza.
+        /// </summary>
+        public CadesProfileV4 Profile { get; set; }
+
+        /// <summary>
+        /// Hash algoritması. Varsayılan SHA256.
+        /// </summary>
+        public CadesHashAlgorithmV4 HashAlgorithm { get; set; }
+
+        /// <summary>
+        /// true ise detached imza oluşturulur (orijinal veri .cms içine gömülmez).
+        /// </summary>
+        public bool Detached { get; set; }
+
+        /// <summary>
+        /// Detached imzalarda: orijinal dosyanın OperationId'si.
+        /// Detached imza oluşturuluyorsa zorunludur, aksi halde null/boş bırakılır.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 CAdES e-imza atma işlemi için son adım isteği.
+    /// İstemcinin imzaladığı veri ile imza tamamlanır.
+    /// </summary>
+    public class ProxyFinishSignForCadesRequestV4
+    {
+        /// <summary>
+        /// e-İmza aracı tarafından imzalanmış veri (Base64).
+        /// </summary>
+        public string SignedData { get; set; }
+
+        /// <summary>
+        /// Mevcut e-imza işlemine ait ID değeridir. StepOne'dan döner.
+        /// </summary>
+        public string KeyId { get; set; }
+
+        /// <summary>
+        /// Mevcut e-imza işlemine ait KeySecret değeridir. StepOne'dan döner.
+        /// </summary>
+        public string KeySecret { get; set; }
+
+        /// <summary>
+        /// StepOne'daki OperationId.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 CAdES imzalı bir belgedeki imza bilgilerini sorgulamak için istek modeli.
+    /// </summary>
+    public class ProxyGetSignatureListCadesRequestV4
+    {
+        /// <summary>
+        /// İmzaları okunacak dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Detached imzalarda: orijinal dosyanın OperationId'si (doğrulama için).
+        /// Attached imzalarda null/boş bırakılır.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 CAdES imza listesi sorgulamasının sonucu.
+    /// </summary>
+    public class ProxyGetSignatureListCadesResultV4
+    {
+        /// <summary>
+        /// Hata var ise detay bilgisi döner.
+        /// </summary>
+        public string Error { get; set; }
+
+        /// <summary>
+        /// Dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Dosyanın detached imza içerip içermediğini belirtir.
+        /// Client bu alanı okuyarak sonraki işlemlerde (imza/upgrade) OriginalFileOperationId göndermesi gerektiğini bilir.
+        /// </summary>
+        public bool IsDetached { get; set; }
+
+        /// <summary>
+        /// Dosyadaki imzaların detaylı bilgileri.
+        /// </summary>
+        public List<ProxyCadesSignatureInfoV4> Signatures { get; set; } = new();
+    }
+
+    /// <summary>
+    /// V4 CAdES imza zenginleştirme (upgrade) isteği.
+    /// Mevcut imzayı daha yüksek bir seviyeye yükseltir.
+    /// </summary>
+    public class ProxyUpgradeCadesRequestV4
+    {
+        /// <summary>
+        /// Upgrade edilecek dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Hedef seviye (mevcut seviyeden yüksek olmalı).
+        /// </summary>
+        public SignatureLevelForCadesV4 TargetLevel { get; set; }
+
+        /// <summary>
+        /// Upgrade edilecek imzanın EntityLabel'ı (örn: S0).
+        /// Boş bırakılırsa ilk imza upgrade edilir.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+
+        /// <summary>
+        /// Detached imzalarda: orijinal dosyanın OperationId'si.
+        /// Attached imzalarda null/boş bırakılır.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 CAdES tek bir imzanın detaylı bilgisi.
+    /// </summary>
+    public class ProxyCadesSignatureInfoV4
+    {
+        /// <summary>
+        /// İmzanın etiket bilgisi (örn: S0, S0:S0).
+        /// </summary>
+        public string EntityLabel { get; set; }
+
+        /// <summary>
+        /// İmza seviyesi (sayısal değer).
+        /// </summary>
+        public string Level { get; set; }
+
+        /// <summary>
+        /// İmza seviyesinin metin karşılığı (örn: BES, T, XL, A).
+        /// </summary>
+        public string LevelString { get; set; }
+
+        /// <summary>
+        /// İmza sahibinin RDN (Relative Distinguished Name) bilgisi.
+        /// </summary>
+        public string SubjectRDN { get; set; }
+
+        /// <summary>
+        /// İmza sahibinin TC kimlik numarası (varsa).
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+        /// <summary>
+        /// İmzanın zaman damgalı olup olmadığı.
+        /// </summary>
+        public bool Timestamped { get; set; }
+
+        /// <summary>
+        /// İmza atılma zamanı (metin formatında).
+        /// </summary>
+        public string? ClaimedSigningTime { get; set; }
+
+        /// <summary>
+        /// İmza atılma zamanı (DateTime formatında).
+        /// </summary>
+        public DateTime? ClaimedSigningTimeAsTime { get; set; }
+
+        /// <summary>
+        /// İmzanın kapsamı (scope).
+        /// </summary>
+        public int Scope { get; set; }
+
+        /// <summary>
+        /// Üst imzanın EntityLabel'ı (seri imzalarda).
+        /// </summary>
+        public string? ParentEntity { get; set; }
+
+        /// <summary>
+        /// İmza profil adı (örn: P2, P3, P4).
+        /// </summary>
+        public string? ProfileName { get; set; }
+
+        /// <summary>
+        /// İmza politika OID'si.
+        /// </summary>
+        public string? PolicyOID { get; set; }
+
+        /// <summary>
+        /// İmzada kullanılan hash algoritması.
+        /// </summary>
+        public string? HashAlgorithm { get; set; }
+
+        /// <summary>
+        /// İmzanın uzun vadeli doğrulama bilgisi içerip içermediği.
+        /// </summary>
+        public bool ContainsLongTermInfo { get; set; }
+
+        /// <summary>
+        /// Son arşiv zaman damgası zamanı (varsa).
+        /// </summary>
+        public string? LastArchivalTime { get; set; }
+
+        /// <summary>
+        /// Zaman damgası detay bilgisi.
+        /// </summary>
+        public ProxyTimestampInfoItemV4? Timestamp { get; set; }
+
+        /// <summary>
+        /// Mevcut seviyeden yapılabilecek tüm upgrade seçenekleri (örn: ["T","C","X","XL","A"]).
+        /// En üst seviyede (A) boş liste döner.
+        /// </summary>
+        public List<string> UpgradeOptions { get; set; } = new();
+
+        /// <summary>
+        /// Profil uyumlu upgrade seçenekleri.
+        /// Profil yoksa null döner.
+        /// </summary>
+        public List<string>? ProfileRecommendedUpgrades { get; set; }
+
+        /// <summary>
+        /// Profil dışı upgrade seçenekleri (teknik olarak mümkün ama profil uyumsuz).
+        /// Profil yoksa null döner.
+        /// </summary>
+        public List<string>? ProfileIncompatibleUpgrades { get; set; }
+    }
+
+    /// <summary>
+    /// V4 CAdES zaman damgası detay bilgisi.
+    /// </summary>
+    public class ProxyTimestampInfoItemV4
+    {
+        /// <summary>
+        /// Zaman damgasının etiket bilgisi.
+        /// </summary>
+        public string EntityLabel { get; set; }
+
+        /// <summary>
+        /// Zaman damgası zamanı (metin formatında).
+        /// </summary>
+        public string? Time { get; set; }
+
+        /// <summary>
+        /// Zaman damgası zamanı (DateTime formatında).
+        /// </summary>
+        public DateTime? TimeAsTime { get; set; }
+
+        /// <summary>
+        /// Zaman damgası otoritesinin (TSA) adı.
+        /// </summary>
+        public string? TSAName { get; set; }
+
+        /// <summary>
+        /// Zaman damgasında kullanılan hash algoritması.
+        /// </summary>
+        public string? HashAlgorithm { get; set; }
+
+        /// <summary>
+        /// Zaman damgası tipi (sayısal değer).
+        /// </summary>
+        public int TimestampType { get; set; }
+
+        /// <summary>
+        /// Zaman damgası tipinin metin karşılığı.
+        /// </summary>
+        public string? TimestampTypeStr { get; set; }
+    }
 
 }

@@ -2053,5 +2053,239 @@ namespace  BirImza.Types
         public long? OutputFileSize { get; set; }
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // V4 CAdES REQUEST MODELLERİ
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// V4 CAdES SignStepOne - İmzalama başlat.
+    /// ExternalCrypto ile hash döner, istemci imzalar.
+    /// </summary>
+    public class SignStepOneCadesCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarından alınan e-imza sertifikası (Base64 DER veya PEM).
+        /// </summary>
+        public string CerBytes { get; set; }
+
+        /// <summary>
+        /// Önceden upload edilmiş dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// SERIAL veya PARALLEL. Boş/null ise PARALLEL.
+        /// </summary>
+        public string? SerialOrParallel { get; set; }
+
+        /// <summary>
+        /// Seri imzada üzerine imza atılacak imzanın EntityLabel'ı (örn: S0, S0:S0).
+        /// Boş bırakılırsa son imza üzerine atılır. Parallel imzada yok sayılır.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+
+        /// <summary>
+        /// Hedef imza seviyesi. SignStepThree'de bu seviyeye upgrade edilir.
+        /// </summary>
+        public SignatureLevelForCadesV4 SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Türk imza profili. EPES gerektiren seviyeler için zorunlu.
+        /// None veya P1: profilsiz BES tabanlı imza.
+        /// P2/P3/P4: EPES tabanlı imza (policy dahil).
+        /// </summary>
+        public CadesProfileV4 Profile { get; set; }
+
+        /// <summary>
+        /// Hash algoritması. Default SHA256.
+        /// </summary>
+        public CadesHashAlgorithmV4 HashAlgorithm { get; set; }
+
+        /// <summary>
+        /// true ise detached imza (orijinal veri .cms içine gömülmez).
+        /// </summary>
+        public bool Detached { get; set; }
+
+        /// <summary>
+        /// Detached imzalı dosyaya yeni imza eklerken: orijinal dosyanın operasyon ID'si.
+        /// Mevcut dosya detached ise bu alan zorunludur.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 CAdES SignStepThree - İmzalama tamamla.
+    /// İstemcinin imzaladığı veri ile imzayı tamamlar, gerekirse upgrade eder.
+    /// </summary>
+    public class SignStepThreeCadesCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// e-İmza aracı tarafından imzalanmış veri (Base64).
+        /// </summary>
+        public string SignedData { get; set; }
+
+        /// <summary>
+        /// StepOne'dan dönen KeyId.
+        /// </summary>
+        public string KeyId { get; set; }
+
+        /// <summary>
+        /// StepOne'dan dönen KeySecret.
+        /// </summary>
+        public string KeySecret { get; set; }
+
+        /// <summary>
+        /// StepOne'daki OperationId.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 CAdES Upgrade - Mevcut imzayı daha yüksek seviyeye yükselt.
+    /// </summary>
+    public class UpgradeCadesCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// Upgrade edilecek dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Hedef seviye (mevcut seviyeden yüksek olmalı).
+        /// </summary>
+        public SignatureLevelForCadesV4 TargetLevel { get; set; }
+
+        /// <summary>
+        /// Upgrade edilecek imzanın EntityLabel'ı (örn: S0).
+        /// Boş bırakılırsa ilk imza upgrade edilir.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+
+        /// <summary>
+        /// Detached imzalarda: orijinal dosyanın operasyon ID'si.
+        /// Attached imzalarda null/boş.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 CAdES GetSignatureList - Dosyadaki imzaları listele.
+    /// </summary>
+    public class GetSignatureListCadesCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// İmzaları okunacak dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Detached imzalarda: orijinal dosyanın operasyon ID'si (doğrulama için).
+        /// Attached imzalarda null/boş.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // V4 CAdES RESPONSE MODELLERİ
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// SignStepOne response - İstemcinin imzalayacağı hash ve state döner.
+    /// </summary>
+    public class SignStepOneCadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public string KeyID { get; set; }
+        public string KeySecret { get; set; }
+        public string State { get; set; }
+    }
+
+    /// <summary>
+    /// SignStepThree response - İmzalama başarılı.
+    /// </summary>
+    public class SignStepThreeCadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public bool IsSuccess { get; set; }
+    }
+
+    /// <summary>
+    /// Upgrade response - Upgrade başarılı.
+    /// </summary>
+    public class UpgradeCadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public bool IsSuccess { get; set; }
+    }
+
+    /// <summary>
+    /// GetSignatureList response - Dosyadaki imza bilgileri.
+    /// </summary>
+    public class GetSignatureListCadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public List<CadesSignatureInfoV4> Signatures { get; set; } = new();
+
+        /// <summary>
+        /// Dosyanın detached imza olup olmadığı. true ise orijinal veri .p7s içinde gömülü değil.
+        /// </summary>
+        public bool IsDetached { get; set; }
+    }
+
+    /// <summary>
+    /// Tek bir CAdES imzasının detaylı bilgisi.
+    /// </summary>
+    public class CadesSignatureInfoV4
+    {
+        public string EntityLabel { get; set; }
+        public string Level { get; set; }
+        public string LevelString { get; set; }
+        public string SubjectRDN { get; set; }
+        public string? CitizenshipNo { get; set; }
+        public bool Timestamped { get; set; }
+        public string? ClaimedSigningTime { get; set; }
+        public DateTime? ClaimedSigningTimeAsTime { get; set; }
+        public int Scope { get; set; }
+        public string? ParentEntity { get; set; }
+        public string? ProfileName { get; set; }
+        public string? PolicyOID { get; set; }
+        public string? HashAlgorithm { get; set; }
+        public bool ContainsLongTermInfo { get; set; }
+        public string? LastArchivalTime { get; set; }
+        public TimestampInfoItemV4? Timestamp { get; set; }
+
+        /// <summary>
+        /// Mevcut seviyeden yapılabilecek tüm upgrade seçenekleri (örn: ["T","C","X","XL","A"]).
+        /// En üst seviyede (A) boş liste döner.
+        /// </summary>
+        public List<string> UpgradeOptions { get; set; } = new();
+
+        /// <summary>
+        /// Profil uyumlu upgrade seçenekleri.
+        /// Profil yoksa null döner.
+        /// </summary>
+        public List<string>? ProfileRecommendedUpgrades { get; set; }
+
+        /// <summary>
+        /// Profil dışı upgrade seçenekleri (teknik olarak mümkün ama profil uyumsuz).
+        /// Profil yoksa null döner.
+        /// </summary>
+        public List<string>? ProfileIncompatibleUpgrades { get; set; }
+    }
+
+    /// <summary>
+    /// Zaman damgası bilgisi.
+    /// </summary>
+    public class TimestampInfoItemV4
+    {
+        public string EntityLabel { get; set; }
+        public string? Time { get; set; }
+        public DateTime? TimeAsTime { get; set; }
+        public string? TSAName { get; set; }
+        public string? HashAlgorithm { get; set; }
+        public int TimestampType { get; set; }
+        public string? TimestampTypeStr { get; set; }
+    }
+
 }
 
