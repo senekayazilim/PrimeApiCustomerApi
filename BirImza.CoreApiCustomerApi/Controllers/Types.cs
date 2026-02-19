@@ -1168,4 +1168,333 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public string? TimestampTypeStr { get; set; }
     }
 
+    #region PAdES V4 Proxy Types
+
+    /// <summary>
+    /// V4 PAdES e-imza atma işlemi için ilk adım isteği.
+    /// Sunucu tarafında hash hesaplanır, istemci bu hash'i imzalar.
+    /// PAdES'te detached mod ve serial/parallel kavramı yoktur.
+    /// </summary>
+    public class ProxyCreateStateOnOnaylarimApiForPadesRequestV4
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarında bulunan e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır (Base64 DER veya PEM).
+        /// </summary>
+        public string Certificate { get; set; }
+
+        /// <summary>
+        /// Önceden upload edilmiş PDF dosyasının OperationId'sidir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Hedef imza seviyesi. SignStepThree'de bu seviyeye upgrade edilir.
+        /// </summary>
+        public SignatureLevelForPadesV4 SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Türk imza profili. PAdES'te sadece P4 desteklenir.
+        /// None: profilsiz imza. P4: EPES tabanlı imza.
+        /// </summary>
+        public PadesProfileV4 Profile { get; set; }
+
+        /// <summary>
+        /// Hash algoritması. Varsayılan SHA256.
+        /// </summary>
+        public CadesHashAlgorithmV4 HashAlgorithm { get; set; }
+
+        /// <summary>
+        /// Görsel imza widget bilgisi. null ise görünmez (invisible) imza atılır.
+        /// </summary>
+        public ProxySignatureWidgetInfo? SignatureWidgetInfo { get; set; }
+    }
+
+    /// <summary>
+    /// V4 PAdES e-imza atma işlemi için son adım isteği.
+    /// İstemcinin imzaladığı veri ile imza tamamlanır.
+    /// </summary>
+    public class ProxyFinishSignForPadesRequestV4
+    {
+        /// <summary>
+        /// e-İmza aracı tarafından imzalanmış veri (Base64).
+        /// </summary>
+        public string SignedData { get; set; }
+
+        /// <summary>
+        /// Mevcut e-imza işlemine ait ID değeridir. StepOne'dan döner.
+        /// </summary>
+        public string KeyId { get; set; }
+
+        /// <summary>
+        /// Mevcut e-imza işlemine ait KeySecret değeridir. StepOne'dan döner.
+        /// </summary>
+        public string KeySecret { get; set; }
+
+        /// <summary>
+        /// StepOne'daki OperationId.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 PAdES imzalı bir PDF belgedeki imza bilgilerini sorgulamak için istek modeli.
+    /// </summary>
+    public class ProxyGetSignatureListPadesRequestV4
+    {
+        /// <summary>
+        /// İmzaları okunacak PDF dosyasının OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 PAdES imza listesi sorgulamasının sonucu.
+    /// </summary>
+    public class ProxyGetSignatureListPadesResultV4
+    {
+        /// <summary>
+        /// Hata var ise detay bilgisi döner.
+        /// </summary>
+        public string Error { get; set; }
+
+        /// <summary>
+        /// Dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// PDF dosyasındaki imzaların detaylı bilgileri.
+        /// </summary>
+        public List<ProxyPadesSignatureInfoV4> Signatures { get; set; } = new();
+    }
+
+    /// <summary>
+    /// V4 PAdES imza zenginleştirme (upgrade) isteği.
+    /// NOT: B-LT'ye upgrade desteklenmez. B-LT için yeni imza atılmalıdır.
+    /// </summary>
+    public class ProxyUpgradePadesRequestV4
+    {
+        /// <summary>
+        /// Upgrade edilecek PDF dosyasının OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Hedef seviye. B-T veya B-LTA olabilir. B-LT desteklenmez.
+        /// </summary>
+        public SignatureLevelForPadesV4 TargetLevel { get; set; }
+
+        /// <summary>
+        /// Upgrade edilecek imzanın EntityLabel'ı (örn: S0).
+        /// Boş bırakılırsa ilk imza upgrade edilir.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+    }
+
+    /// <summary>
+    /// V4 PAdES tek bir imzanın detaylı bilgisi.
+    /// CAdES'ten farklı olarak Scope, ParentEntity ve LastArchivalTime alanları yoktur.
+    /// </summary>
+    public class ProxyPadesSignatureInfoV4
+    {
+        /// <summary>
+        /// İmzanın etiket bilgisi (örn: S0).
+        /// </summary>
+        public string EntityLabel { get; set; }
+
+        /// <summary>
+        /// İmza seviyesi (sayısal değer).
+        /// </summary>
+        public string Level { get; set; }
+
+        /// <summary>
+        /// İmza seviyesinin metin karşılığı (örn: B-B, B-T, B-LT, B-LTA).
+        /// </summary>
+        public string LevelString { get; set; }
+
+        /// <summary>
+        /// İmza sahibinin RDN (Relative Distinguished Name) bilgisi.
+        /// </summary>
+        public string SubjectRDN { get; set; }
+
+        /// <summary>
+        /// İmza sahibinin TC kimlik numarası (varsa).
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+        /// <summary>
+        /// İmzanın zaman damgalı olup olmadığı.
+        /// </summary>
+        public bool Timestamped { get; set; }
+
+        /// <summary>
+        /// İmza atılma zamanı (metin formatında).
+        /// </summary>
+        public string? ClaimedSigningTime { get; set; }
+
+        /// <summary>
+        /// İmza atılma zamanı (DateTime formatında).
+        /// </summary>
+        public DateTime? ClaimedSigningTimeAsTime { get; set; }
+
+        /// <summary>
+        /// İmza profil adı (örn: P4).
+        /// </summary>
+        public string? ProfileName { get; set; }
+
+        /// <summary>
+        /// İmza politika OID'si.
+        /// </summary>
+        public string? PolicyOID { get; set; }
+
+        /// <summary>
+        /// İmzada kullanılan hash algoritması.
+        /// </summary>
+        public string? HashAlgorithm { get; set; }
+
+        /// <summary>
+        /// İmzanın uzun vadeli doğrulama bilgisi içerip içermediği.
+        /// </summary>
+        public bool ContainsLongTermInfo { get; set; }
+
+        /// <summary>
+        /// Zaman damgası detay bilgisi.
+        /// </summary>
+        public ProxyTimestampInfoItemV4? Timestamp { get; set; }
+
+        /// <summary>
+        /// Mevcut seviyeden yapılabilecek upgrade seçenekleri (örn: ["B-T","B-LTA"]).
+        /// NOT: B-LT'ye upgrade desteklenmez.
+        /// </summary>
+        public List<string> UpgradeOptions { get; set; } = new();
+
+        /// <summary>
+        /// Profil uyumlu upgrade seçenekleri. Profil yoksa null döner.
+        /// </summary>
+        public List<string>? ProfileRecommendedUpgrades { get; set; }
+
+        /// <summary>
+        /// Profil dışı upgrade seçenekleri. Profil yoksa null döner.
+        /// </summary>
+        public List<string>? ProfileIncompatibleUpgrades { get; set; }
+    }
+
+    /// <summary>
+    /// PDF üzerine görsel imza widget bilgisi.
+    /// Görünür imza atılmak istendiğinde konum, boyut, arka plan görseli ve metin satırları belirtilir.
+    /// </summary>
+    public class ProxySignatureWidgetInfo
+    {
+        /// <summary>
+        /// İmzanın pixel olarak genişliğidir.
+        /// </summary>
+        public float Width { get; set; }
+
+        /// <summary>
+        /// İmzanın pixel olarak yüksekliğidir.
+        /// </summary>
+        public float Height { get; set; }
+
+        /// <summary>
+        /// İmzanın sayfanın solundan olan uzaklığıdır (oran olarak).
+        /// Sayfa genişliği 1000 olan bir sayfa için 0.1 verilirse, uzaklık 100 olur.
+        /// Left ve Right değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Left { get; set; }
+
+        /// <summary>
+        /// İmzanın sayfanın sağından olan uzaklığıdır (oran olarak).
+        /// Left ve Right değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Right { get; set; }
+
+        /// <summary>
+        /// İmzanın sayfanın üstünden olan uzaklığıdır (oran olarak).
+        /// Top ve Bottom değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Top { get; set; }
+
+        /// <summary>
+        /// İmzanın sayfanın altından olan uzaklığıdır (oran olarak).
+        /// Top ve Bottom değerleri aynı anda kullanılmamalı, sadece biri kullanılmalıdır.
+        /// </summary>
+        public float? Bottom { get; set; }
+
+        /// <summary>
+        /// İmzanın lokasyonu için hangi parametrelerin kullanılması gerektiği bilgisidir.
+        /// Örnekler: "left top", "right top".
+        /// </summary>
+        public string TransformOrigin { get; set; }
+
+        /// <summary>
+        /// İmza görselinde arka plan görseli olarak kullanılacak imajın datasıdır. İmaj jpg olmalıdır.
+        /// </summary>
+        public byte[] ImageBytes { get; set; }
+
+        /// <summary>
+        /// İmza görselinin hangi sayfalara yerleştirileceği bilgisidir, 0'dan başlar.
+        /// </summary>
+        public int[] PagesToPlaceOn { get; set; }
+
+        /// <summary>
+        /// İmza görseli içerisinde yazılacak metin satırlarıdır.
+        /// </summary>
+        public List<ProxyLineInfo> Lines { get; set; }
+    }
+
+    /// <summary>
+    /// İmza görseli içerisindeki tek bir metin satırının bilgisi.
+    /// Font, renk, marjin ve metin ayarlarını içerir.
+    /// </summary>
+    public class ProxyLineInfo
+    {
+        /// <summary>
+        /// Satır içerisinde yazacak ifadedir.
+        /// </summary>
+        public string Text { get; set; }
+
+        /// <summary>
+        /// Satırın sol marjinidir.
+        /// </summary>
+        public int LeftMargin { get; set; }
+
+        /// <summary>
+        /// Satırın üst marjinidir.
+        /// </summary>
+        public int TopMargin { get; set; }
+
+        /// <summary>
+        /// Satırın alt marjinidir.
+        /// </summary>
+        public int BottomMargin { get; set; }
+
+        /// <summary>
+        /// Satırın sağ marjinidir.
+        /// </summary>
+        public int RightMargin { get; set; }
+
+        /// <summary>
+        /// Satırın hangi font ile yazılacağını belirler. Arial, Tahoma gibi kullanınız.
+        /// </summary>
+        public string FontName { get; set; }
+
+        /// <summary>
+        /// Satırın hangi font büyüklüğü ile yazılacağını belirler.
+        /// </summary>
+        public float FontSize { get; set; }
+
+        /// <summary>
+        /// Satırın hangi font tipi ile yazılacağını belirler.
+        /// Olası değerler: Regular, Bold, Italic, Underline, Strikeout.
+        /// </summary>
+        public string FontStyle { get; set; }
+
+        /// <summary>
+        /// Satırın hangi renkle yazılacağını belirler. #FF00FF gibi kullanınız.
+        /// </summary>
+        public string ColorHtml { get; set; }
+    }
+
+    #endregion
+
 }

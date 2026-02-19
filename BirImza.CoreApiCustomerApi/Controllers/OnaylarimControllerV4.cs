@@ -237,5 +237,248 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
         #endregion
 
+        #region Pades V4
+
+        /// <summary>
+        /// V4 PAdES e-imza atma işlemi için ilk adımdır.
+        /// Sunucu tarafında hash hesaplanır, istemci bu hash'i imzalar.
+        /// PAdES'te detached mod ve serial/parallel kavramı yoktur.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("CreateStateOnOnaylarimApiForPadesV4")]
+        public async Task<ProxyCreateStateOnOnaylarimApiResult> CreateStateOnOnaylarimApiForPadesV4(ProxyCreateStateOnOnaylarimApiForPadesRequestV4 request)
+        {
+            _logger.LogInformation("CreateStateOnOnaylarimApiForPadesV4 start");
+
+            var result = new ProxyCreateStateOnOnaylarimApiResult();
+
+            try
+            {
+                var signStepOnePadesCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiPades/SignStepOnePadesCore"
+                            .WithHeader("X-API-KEY", _apiKey)
+                            .PostJsonAsync(
+                                    new SignStepOnePadesCoreRequestV4()
+                                    {
+                                        CerBytes = request.Certificate,
+                                        OperationId = request.OperationId,
+                                        RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                        DisplayLanguage = "en",
+                                        SignatureLevel = request.SignatureLevel,
+                                        Profile = request.Profile,
+                                        HashAlgorithm = request.HashAlgorithm,
+                                        SignatureWidgetInfo = request.SignatureWidgetInfo != null ? new SignatureWidgetInfo()
+                                        {
+                                            Width = request.SignatureWidgetInfo.Width,
+                                            Height = request.SignatureWidgetInfo.Height,
+                                            Left = request.SignatureWidgetInfo.Left,
+                                            Right = request.SignatureWidgetInfo.Right,
+                                            Top = request.SignatureWidgetInfo.Top,
+                                            Bottom = request.SignatureWidgetInfo.Bottom,
+                                            TransformOrigin = request.SignatureWidgetInfo.TransformOrigin,
+                                            ImageBytes = request.SignatureWidgetInfo.ImageBytes,
+                                            PagesToPlaceOn = request.SignatureWidgetInfo.PagesToPlaceOn,
+                                            Lines = request.SignatureWidgetInfo.Lines?.Select(l => new LineInfo()
+                                            {
+                                                Text = l.Text,
+                                                LeftMargin = l.LeftMargin,
+                                                TopMargin = l.TopMargin,
+                                                BottomMargin = l.BottomMargin,
+                                                RightMargin = l.RightMargin,
+                                                FontName = l.FontName,
+                                                FontSize = l.FontSize,
+                                                FontStyle = l.FontStyle,
+                                                ColorHtml = l.ColorHtml,
+                                            }).ToList(),
+                                        } : null,
+                                    })
+                            .ReceiveJson<ApiResult<SignStepOnePadesCoreResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(signStepOnePadesCoreResult.Error))
+                {
+                    result.KeyID = signStepOnePadesCoreResult.Result.KeyID;
+                    result.KeySecret = signStepOnePadesCoreResult.Result.KeySecret;
+                    result.State = signStepOnePadesCoreResult.Result.State;
+                    result.OperationId = signStepOnePadesCoreResult.Result.OperationId;
+                }
+                else
+                {
+                    result.Error = signStepOnePadesCoreResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CreateStateOnOnaylarimApiForPadesV4");
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// V4 PAdES e-imza atma işlemi için son adımdır.
+        /// İstemcinin imzaladığı veri ile imza tamamlanır.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("FinishSignForPadesV4")]
+        public async Task<ProxyFinishSignResult> FinishSignForPadesV4(ProxyFinishSignForPadesRequestV4 request)
+        {
+            _logger.LogInformation("FinishSignForPadesV4");
+
+            var result = new ProxyFinishSignResult();
+
+            try
+            {
+                var signStepThreePadesCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiPades/SignStepThreePadesCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new SignStepThreePadesCoreRequestV4
+                                        {
+                                            SignedData = request.SignedData,
+                                            KeyId = request.KeyId,
+                                            KeySecret = request.KeySecret,
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                        })
+                                .ReceiveJson<ApiResult<SignStepThreePadesCoreResultV4>>();
+
+                result.IsSuccess = signStepThreePadesCoreResult.Result.IsSuccess;
+                result.OperationId = signStepThreePadesCoreResult.Result.OperationId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "FinishSignForPadesV4");
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// V4 PAdES imzalı bir PDF belgenin içindeki imzaların detaylı bilgisini alır.
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost("GetSignatureListPadesV4")]
+        public async Task<ProxyGetSignatureListPadesResultV4> GetSignatureListPadesV4([FromBody] ProxyGetSignatureListPadesRequestV4 request)
+        {
+            var result = new ProxyGetSignatureListPadesResultV4();
+
+            try
+            {
+                var getSignatureListCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiPades/GetSignatureListCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new GetSignatureListPadesCoreRequestV4()
+                                        {
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                        })
+                                .ReceiveJson<ApiResult<GetSignatureListPadesCoreResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(getSignatureListCoreResult.Error))
+                {
+                    result.OperationId = getSignatureListCoreResult.Result.OperationId;
+                    if (getSignatureListCoreResult.Result.Signatures != null)
+                    {
+                        result.Signatures = getSignatureListCoreResult.Result.Signatures
+                            .Select(x => new ProxyPadesSignatureInfoV4()
+                            {
+                                EntityLabel = x.EntityLabel,
+                                Level = x.Level,
+                                LevelString = x.LevelString,
+                                SubjectRDN = x.SubjectRDN,
+                                CitizenshipNo = x.CitizenshipNo,
+                                Timestamped = x.Timestamped,
+                                ClaimedSigningTime = x.ClaimedSigningTime,
+                                ClaimedSigningTimeAsTime = x.ClaimedSigningTimeAsTime,
+                                ProfileName = x.ProfileName,
+                                PolicyOID = x.PolicyOID,
+                                HashAlgorithm = x.HashAlgorithm,
+                                ContainsLongTermInfo = x.ContainsLongTermInfo,
+                                Timestamp = x.Timestamp != null ? new ProxyTimestampInfoItemV4()
+                                {
+                                    EntityLabel = x.Timestamp.EntityLabel,
+                                    Time = x.Timestamp.Time,
+                                    TimeAsTime = x.Timestamp.TimeAsTime,
+                                    TSAName = x.Timestamp.TSAName,
+                                    HashAlgorithm = x.Timestamp.HashAlgorithm,
+                                    TimestampType = x.Timestamp.TimestampType,
+                                    TimestampTypeStr = x.Timestamp.TimestampTypeStr,
+                                } : null,
+                                UpgradeOptions = x.UpgradeOptions,
+                                ProfileRecommendedUpgrades = x.ProfileRecommendedUpgrades,
+                                ProfileIncompatibleUpgrades = x.ProfileIncompatibleUpgrades,
+                            }).ToList();
+                    }
+                }
+                else
+                {
+                    result.Error = getSignatureListCoreResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Error = ex.Message;
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// V4 PAdES imzalı bir belgenin e-imzalarını zenginleştirir (upgrade).
+        /// NOT: B-LT'ye upgrade desteklenmez. B-LT için yeni imza atılmalıdır.
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost("UpgradePadesV4")]
+        public async Task<IActionResult> UpgradePadesV4([FromBody] ProxyUpgradePadesRequestV4 request)
+        {
+            ApiResult<UpgradePadesCoreResultV4> upgradePadesCoreResult = null;
+            try
+            {
+                upgradePadesCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiPades/UpgradePadesCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new UpgradePadesCoreRequestV4()
+                                        {
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                            TargetLevel = request.TargetLevel,
+                                            SignaturePath = request.SignaturePath,
+                                        })
+                                .ReceiveJson<ApiResult<UpgradePadesCoreResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(upgradePadesCoreResult.Error) == false)
+                {
+                    return BadRequest("İmza zenginleştirilemedi. Hata: " + upgradePadesCoreResult.Error);
+                }
+                if (upgradePadesCoreResult.Result.IsSuccess == false)
+                {
+                    return BadRequest("İmza zenginleştirilemedi.");
+                }
+
+                return Ok(upgradePadesCoreResult.Result.OperationId);
+            }
+            catch (Exception ex)
+            {
+            }
+
+            if (upgradePadesCoreResult == null)
+            {
+                return BadRequest("Hata");
+            }
+            else if (string.IsNullOrWhiteSpace(upgradePadesCoreResult.Error) == false)
+            {
+                return BadRequest(upgradePadesCoreResult.Error);
+            }
+            else if (upgradePadesCoreResult.Result.IsSuccess == false)
+            {
+                return BadRequest("Hata");
+            }
+
+            return BadRequest("Hata");
+        }
+
+        #endregion
+
     }
 }

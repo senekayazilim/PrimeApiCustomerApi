@@ -2287,5 +2287,190 @@ namespace  BirImza.Types
         public string? TimestampTypeStr { get; set; }
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // V4 PAdES REQUEST MODELLERİ
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// V4 PAdES SignStepOne - İmzalama başlat.
+    /// ExternalCrypto ile hash döner, istemci imzalar.
+    /// PAdES'te detached mod ve serial/parallel kavramı yoktur.
+    /// </summary>
+    public class SignStepOnePadesCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarından alınan e-imza sertifikası (Base64 DER veya PEM).
+        /// </summary>
+        public string CerBytes { get; set; }
+
+        /// <summary>
+        /// Önceden upload edilmiş PDF dosyasının OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Hedef imza seviyesi.
+        /// </summary>
+        public SignatureLevelForPadesV4 SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Türk imza profili. PAdES'te sadece P4 desteklenir.
+        /// None: profilsiz imza.
+        /// P4: EPES tabanlı imza (policy dahil, ÇİSDuP/OCSP).
+        /// </summary>
+        public PadesProfileV4 Profile { get; set; }
+
+        /// <summary>
+        /// Hash algoritması. Default SHA256.
+        /// </summary>
+        public CadesHashAlgorithmV4 HashAlgorithm { get; set; }
+
+        /// <summary>
+        /// Görsel imza widget bilgisi. null ise görünmez imza atılır.
+        /// </summary>
+        public SignatureWidgetInfo? SignatureWidgetInfo { get; set; }
+    }
+
+    /// <summary>
+    /// V4 PAdES SignStepThree - İmzalama tamamla.
+    /// İstemcinin imzaladığı veri ile imzayı tamamlar, gerekirse upgrade eder.
+    /// </summary>
+    public class SignStepThreePadesCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// e-İmza aracı tarafından imzalanmış veri (Base64).
+        /// </summary>
+        public string SignedData { get; set; }
+
+        /// <summary>
+        /// StepOne'dan dönen KeyId.
+        /// </summary>
+        public string KeyId { get; set; }
+
+        /// <summary>
+        /// StepOne'dan dönen KeySecret.
+        /// </summary>
+        public string KeySecret { get; set; }
+
+        /// <summary>
+        /// StepOne'daki OperationId.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 PAdES Upgrade - Mevcut imzayı daha yüksek seviyeye yükselt.
+    /// NOT: B-LT'ye upgrade desteklenmez (Update her zaman B-LTA üretir).
+    /// B-LT için yeni imza atılmalıdır.
+    /// </summary>
+    public class UpgradePadesCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// Upgrade edilecek dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Hedef seviye. B-T veya B-LTA olabilir.
+        /// B-LT hedefi desteklenmez (Update her zaman Document Timestamp ekler = B-LTA).
+        /// </summary>
+        public SignatureLevelForPadesV4 TargetLevel { get; set; }
+
+        /// <summary>
+        /// Upgrade edilecek imzanın EntityLabel'ı (örn: S0).
+        /// Boş bırakılırsa ilk imza upgrade edilir.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+    }
+
+    /// <summary>
+    /// V4 PAdES GetSignatureList - PDF dosyasındaki imzaları listele.
+    /// </summary>
+    public class GetSignatureListPadesCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// İmzaları okunacak PDF dosyasının OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // V4 PAdES RESPONSE MODELLERİ
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// PAdES SignStepOne response - İstemcinin imzalayacağı hash ve state döner.
+    /// </summary>
+    public class SignStepOnePadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public string KeyID { get; set; }
+        public string KeySecret { get; set; }
+        public string State { get; set; }
+    }
+
+    /// <summary>
+    /// PAdES SignStepThree response - İmzalama başarılı.
+    /// </summary>
+    public class SignStepThreePadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public bool IsSuccess { get; set; }
+    }
+
+    /// <summary>
+    /// PAdES Upgrade response - Upgrade başarılı.
+    /// </summary>
+    public class UpgradePadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public bool IsSuccess { get; set; }
+    }
+
+    /// <summary>
+    /// PAdES GetSignatureList response - PDF dosyasındaki imza bilgileri.
+    /// </summary>
+    public class GetSignatureListPadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public List<PadesSignatureInfoV4> Signatures { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Tek bir PAdES imzasının detaylı bilgisi.
+    /// </summary>
+    public class PadesSignatureInfoV4
+    {
+        public string EntityLabel { get; set; }
+        public string Level { get; set; }
+        public string LevelString { get; set; }
+        public string SubjectRDN { get; set; }
+        public string? CitizenshipNo { get; set; }
+        public bool Timestamped { get; set; }
+        public string? ClaimedSigningTime { get; set; }
+        public DateTime? ClaimedSigningTimeAsTime { get; set; }
+        public string? ProfileName { get; set; }
+        public string? PolicyOID { get; set; }
+        public string? HashAlgorithm { get; set; }
+        public bool ContainsLongTermInfo { get; set; }
+        public TimestampInfoItemV4? Timestamp { get; set; }
+
+        /// <summary>
+        /// Mevcut seviyeden yapılabilecek upgrade seçenekleri (örn: ["B-T","B-LTA"]).
+        /// NOT: B-LT'ye upgrade desteklenmez.
+        /// </summary>
+        public List<string> UpgradeOptions { get; set; } = new();
+
+        /// <summary>
+        /// Profil uyumlu upgrade seçenekleri. Profil yoksa null.
+        /// </summary>
+        public List<string>? ProfileRecommendedUpgrades { get; set; }
+
+        /// <summary>
+        /// Profil dışı upgrade seçenekleri. Profil yoksa null.
+        /// </summary>
+        public List<string>? ProfileIncompatibleUpgrades { get; set; }
+    }
+
 }
 
