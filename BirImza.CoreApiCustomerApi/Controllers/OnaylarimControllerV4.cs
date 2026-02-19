@@ -480,5 +480,238 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
         #endregion
 
+        #region Xades V4
+
+        /// <summary>
+        /// V4 XAdES e-imza atma işlemi için ilk adımdır.
+        /// Sunucu tarafında hash hesaplanır, istemci bu hash'i imzalar.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("CreateStateOnOnaylarimApiForXadesV4")]
+        public async Task<ProxyCreateStateOnOnaylarimApiResult> CreateStateOnOnaylarimApiForXadesV4(ProxyCreateStateOnOnaylarimApiForXadesRequestV4 request)
+        {
+            _logger.LogInformation("CreateStateOnOnaylarimApiForXadesV4 start");
+
+            var result = new ProxyCreateStateOnOnaylarimApiResult();
+
+            try
+            {
+                var signStepOneXadesCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiXades/SignStepOneXadesCore"
+                            .WithHeader("X-API-KEY", _apiKey)
+                            .PostJsonAsync(
+                                    new SignStepOneXadesCoreRequestV4()
+                                    {
+                                        CerBytes = request.Certificate,
+                                        OperationId = request.OperationId,
+                                        RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                        DisplayLanguage = "en",
+                                        SerialOrParallel = request.SerialOrParallel,
+                                        SignaturePath = request.SignaturePath,
+                                        SignatureLevel = request.SignatureLevel,
+                                        Profile = request.Profile,
+                                        HashAlgorithm = request.HashAlgorithm,
+                                        SignatureMode = request.SignatureMode,
+                                        OriginalFileOperationId = request.OriginalFileOperationId,
+                                        EnvelopedContentElementId = request.EnvelopedContentElementId,
+                                         EnvelopingObjectEncoding = request.EnvelopingObjectEncoding,
+                                            EnvelopingObjectMimeType = request.EnvelopingObjectMimeType,
+                                    })
+                            .ReceiveJson<ApiResult<SignStepOneXadesCoreResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(signStepOneXadesCoreResult.Error))
+                {
+                    result.KeyID = signStepOneXadesCoreResult.Result.KeyID;
+                    result.KeySecret = signStepOneXadesCoreResult.Result.KeySecret;
+                    result.State = signStepOneXadesCoreResult.Result.State;
+                    result.OperationId = signStepOneXadesCoreResult.Result.OperationId;
+                }
+                else
+                {
+                    result.Error = signStepOneXadesCoreResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CreateStateOnOnaylarimApiForXadesV4");
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// V4 XAdES e-imza atma işlemi için son adımdır.
+        /// İstemcinin imzaladığı veri ile imza tamamlanır.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("FinishSignForXadesV4")]
+        public async Task<ProxyFinishSignResult> FinishSignForXadesV4(ProxyFinishSignForXadesRequestV4 request)
+        {
+            _logger.LogInformation("FinishSignForXadesV4");
+
+            var result = new ProxyFinishSignResult();
+
+            try
+            {
+                var signStepThreeXadesCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiXades/SignStepThreeXadesCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new SignStepThreeXadesCoreRequestV4
+                                        {
+                                            SignedData = request.SignedData,
+                                            KeyId = request.KeyId,
+                                            KeySecret = request.KeySecret,
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                        })
+                                .ReceiveJson<ApiResult<SignStepThreeXadesCoreResultV4>>();
+
+                result.IsSuccess = signStepThreeXadesCoreResult.Result.IsSuccess;
+                result.OperationId = signStepThreeXadesCoreResult.Result.OperationId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "FinishSignForXadesV4");
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// V4 XAdES imzalı bir belgenin içindeki imzaların detaylı bilgisini alır.
+        /// Detached imzalar için OriginalFileOperationId gönderilebilir.
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost("GetSignatureListXadesV4")]
+        public async Task<ProxyGetSignatureListXadesResultV4> GetSignatureListXadesV4([FromBody] ProxyGetSignatureListXadesRequestV4 request)
+        {
+            var result = new ProxyGetSignatureListXadesResultV4();
+
+            try
+            {
+                var getSignatureListCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiXades/GetSignatureListCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new GetSignatureListXadesCoreRequestV4()
+                                        {
+                                            OperationId = request.OperationId,
+                                            OriginalFileOperationId = request.OriginalFileOperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                        })
+                                .ReceiveJson<ApiResult<GetSignatureListXadesCoreResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(getSignatureListCoreResult.Error))
+                {
+                    result.OperationId = getSignatureListCoreResult.Result.OperationId;
+                    result.IsDetached = getSignatureListCoreResult.Result.IsDetached;
+                    result.SignatureMode = getSignatureListCoreResult.Result.SignatureMode;
+                    if (getSignatureListCoreResult.Result.Signatures != null)
+                    {
+                        result.Signatures = getSignatureListCoreResult.Result.Signatures
+                            .Select(x => new ProxyXadesSignatureInfoV4()
+                            {
+                                EntityLabel = x.EntityLabel,
+                                Level = x.Level,
+                                LevelString = x.LevelString,
+                                SubjectRDN = x.SubjectRDN,
+                                CitizenshipNo = x.CitizenshipNo,
+                                Timestamped = x.Timestamped,
+                                ClaimedSigningTime = x.ClaimedSigningTime,
+                                ClaimedSigningTimeAsTime = x.ClaimedSigningTimeAsTime,
+                                ParentEntity = x.ParentEntity,
+                                ProfileName = x.ProfileName,
+                                PolicyOID = x.PolicyOID,
+                                HashAlgorithm = x.HashAlgorithm,
+                                ContainsLongTermInfo = x.ContainsLongTermInfo,
+                                LastArchivalTime = x.LastArchivalTime,
+                                Timestamp = x.Timestamp != null ? new ProxyTimestampInfoItemV4()
+                                {
+                                    EntityLabel = x.Timestamp.EntityLabel,
+                                    Time = x.Timestamp.Time,
+                                    TimeAsTime = x.Timestamp.TimeAsTime,
+                                    TSAName = x.Timestamp.TSAName,
+                                    HashAlgorithm = x.Timestamp.HashAlgorithm,
+                                    TimestampType = x.Timestamp.TimestampType,
+                                    TimestampTypeStr = x.Timestamp.TimestampTypeStr,
+                                } : null,
+                                SignatureMode = x.SignatureMode,
+                                UpgradeOptions = x.UpgradeOptions,
+                                ProfileRecommendedUpgrades = x.ProfileRecommendedUpgrades,
+                                ProfileIncompatibleUpgrades = x.ProfileIncompatibleUpgrades,
+                            }).ToList();
+                    }
+                }
+                else
+                {
+                    result.Error = getSignatureListCoreResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Error = ex.Message;
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// V4 XAdES imzalı bir belgenin e-imzalarını zenginleştirir (upgrade).
+        /// Detached imzalar için OriginalFileOperationId gönderilebilir.
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost("UpgradeXadesV4")]
+        public async Task<IActionResult> UpgradeXadesV4([FromBody] ProxyUpgradeXadesRequestV4 request)
+        {
+            ApiResult<UpgradeXadesCoreResultV4> upgradeXadesCoreResult = null;
+            try
+            {
+                upgradeXadesCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiXades/UpgradeXadesCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new UpgradeXadesCoreRequestV4()
+                                        {
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                            TargetLevel = request.TargetLevel,
+                                            SignaturePath = request.SignaturePath,
+                                            OriginalFileOperationId = request.OriginalFileOperationId,
+                                        })
+                                .ReceiveJson<ApiResult<UpgradeXadesCoreResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(upgradeXadesCoreResult.Error) == false)
+                {
+                    return BadRequest("İmza zenginleştirilemedi. Hata: " + upgradeXadesCoreResult.Error);
+                }
+                if (upgradeXadesCoreResult.Result.IsSuccess == false)
+                {
+                    return BadRequest("İmza zenginleştirilemedi.");
+                }
+
+                return Ok(upgradeXadesCoreResult.Result.OperationId);
+            }
+            catch (Exception ex)
+            {
+            }
+
+            if (upgradeXadesCoreResult == null)
+            {
+                return BadRequest("Hata");
+            }
+            else if (string.IsNullOrWhiteSpace(upgradeXadesCoreResult.Error) == false)
+            {
+                return BadRequest(upgradeXadesCoreResult.Error);
+            }
+            else if (upgradeXadesCoreResult.Result.IsSuccess == false)
+            {
+                return BadRequest("Hata");
+            }
+
+            return BadRequest("Hata");
+        }
+
+        #endregion
+
     }
 }

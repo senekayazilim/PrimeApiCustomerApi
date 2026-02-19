@@ -1497,4 +1497,295 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
     #endregion
 
+    #region XAdES V4 Proxy Types
+
+    /// <summary>
+    /// V4 XAdES e-imza atma işlemi için ilk adım isteği.
+    /// Sunucu tarafında hash hesaplanır, istemci bu hash'i imzalar.
+    /// </summary>
+    public class ProxyCreateStateOnOnaylarimApiForXadesRequestV4
+    {
+        /// <summary>
+        /// Son kullanıcı bilgisayarında bulunan e-İmza Aracı vasıtasıyla alınan, e-imza atarken kullanılacak sertifikadır (Base64 DER veya PEM).
+        /// </summary>
+        public string Certificate { get; set; }
+
+        /// <summary>
+        /// Önceden upload edilmiş dosyanın OperationId'sidir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Seri veya paralel imza. Boş geçilirse PARALLEL.
+        /// SERIAL: Counter-sign (üst imzanın unsigned alanına).
+        /// PARALLEL: Co-sign (bağımsız yeni Signature elementi).
+        /// </summary>
+        public string? SerialOrParallel { get; set; }
+
+        /// <summary>
+        /// Seri imzada üzerine imza atılacak imzanın EntityLabel'ı (örn: S0).
+        /// Boş bırakılırsa son imza üzerine atılır. Parallel imzada yok sayılır.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+
+        /// <summary>
+        /// Hedef imza seviyesi. XAdES seviyeleri: BES, EPES, T, XL, A (C ve X yoktur).
+        /// </summary>
+        public SignatureLevelForXadesV4 SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Türk imza profili. None veya P1: profilsiz BES. P2/P3/P4: EPES tabanlı imza.
+        /// </summary>
+        public XadesProfileV4 Profile { get; set; }
+
+        /// <summary>
+        /// Hash algoritması. Varsayılan SHA256.
+        /// </summary>
+        public CadesHashAlgorithmV4 HashAlgorithm { get; set; }
+
+        /// <summary>
+        /// İmza modu.
+        /// Enveloped: İmza XML dokümanın içine gömülür (input XML olmalı).
+        /// Enveloping: Veri ds:Object elementi içine konur.
+        /// Detached: İmza ayrı dosyada.
+        /// </summary>
+        public XadesSignatureModeV4 SignatureMode { get; set; }
+
+        /// <summary>
+        /// Detached imzalarda: orijinal dosyanın OperationId'si.
+        /// Enveloped/Enveloping'de null.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
+
+        /// <summary>
+        /// Enveloped modda çoklu imza için: XML'deki hedef elementin Id attribute'u.
+        /// Örn: "content-1" → Reference URI="#content-1" olur.
+        /// Boş ise URI="" ile tüm doküman imzalanır.
+        /// </summary>
+        public string? EnvelopedContentElementId { get; set; }
+
+        /// <summary>
+        /// Enveloping imza durumunda, zarf içinde yer alan nesnenin MIME türü.
+        /// Boş bırakılırsa "text/xml" kullanılır.
+        /// Örnek değerler: "text/xml", "application/pdf", "application/octet-stream"
+        /// </summary>
+        public string? EnvelopingObjectMimeType { get; set; }
+
+        /// <summary>
+        /// Enveloping imza durumunda, zarf içinde yer alan nesnenin Encoding özniteliği.
+        /// Boş bırakılırsa "http://www.w3.org/2000/09/xmldsig#base64" kullanılır.
+        /// </summary>
+        public string? EnvelopingObjectEncoding { get; set; }
+    }
+
+    /// <summary>
+    /// V4 XAdES e-imza atma işlemi için son adım isteği.
+    /// İstemcinin imzaladığı veri ile imza tamamlanır.
+    /// </summary>
+    public class ProxyFinishSignForXadesRequestV4
+    {
+        /// <summary>
+        /// e-İmza aracı tarafından imzalanmış veri (Base64).
+        /// </summary>
+        public string SignedData { get; set; }
+
+        /// <summary>
+        /// Mevcut e-imza işlemine ait ID değeridir. StepOne'dan döner.
+        /// </summary>
+        public string KeyId { get; set; }
+
+        /// <summary>
+        /// Mevcut e-imza işlemine ait KeySecret değeridir. StepOne'dan döner.
+        /// </summary>
+        public string KeySecret { get; set; }
+
+        /// <summary>
+        /// StepOne'daki OperationId.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 XAdES imzalı bir belgedeki imza bilgilerini sorgulamak için istek modeli.
+    /// </summary>
+    public class ProxyGetSignatureListXadesRequestV4
+    {
+        /// <summary>
+        /// İmzaları okunacak dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Detached imzalarda: orijinal dosyanın OperationId'si (doğrulama için).
+        /// Enveloped/Enveloping'de null/boş bırakılır.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 XAdES imza listesi sorgulamasının sonucu.
+    /// </summary>
+    public class ProxyGetSignatureListXadesResultV4
+    {
+        /// <summary>
+        /// Hata var ise detay bilgisi döner.
+        /// </summary>
+        public string Error { get; set; }
+
+        /// <summary>
+        /// Dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Dosyadaki imzaların detaylı bilgileri.
+        /// </summary>
+        public List<ProxyXadesSignatureInfoV4> Signatures { get; set; } = new();
+
+        /// <summary>
+        /// Dosyanın detached imza olup olmadığı.
+        /// </summary>
+        public bool IsDetached { get; set; }
+
+        /// <summary>
+        /// İmza modu: Enveloped, Enveloping, veya Detached.
+        /// </summary>
+        public string? SignatureMode { get; set; }
+    }
+
+    /// <summary>
+    /// V4 XAdES imza zenginleştirme (upgrade) isteği.
+    /// XAdES seviyeleri: T, XL, A. C ve X yoktur, BES→EPES yasak.
+    /// </summary>
+    public class ProxyUpgradeXadesRequestV4
+    {
+        /// <summary>
+        /// Upgrade edilecek dosyanın OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Hedef seviye (mevcut seviyeden yüksek olmalı).
+        /// </summary>
+        public SignatureLevelForXadesV4 TargetLevel { get; set; }
+
+        /// <summary>
+        /// Upgrade edilecek imzanın EntityLabel'ı (örn: S0).
+        /// Boş bırakılırsa ilk imza upgrade edilir.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+
+        /// <summary>
+        /// Detached imzalarda: orijinal dosyanın OperationId'si.
+        /// Enveloped/Enveloping'de null/boş bırakılır.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
+    }
+
+    /// <summary>
+    /// V4 XAdES tek bir imzanın detaylı bilgisi.
+    /// CAdES'e göre Scope yok, SignatureMode eklendi.
+    /// PAdES'e göre ParentEntity ve LastArchivalTime var, SignatureMode eklendi.
+    /// </summary>
+    public class ProxyXadesSignatureInfoV4
+    {
+        /// <summary>
+        /// İmzanın etiket bilgisi (örn: S0, S0:S0).
+        /// </summary>
+        public string EntityLabel { get; set; }
+
+        /// <summary>
+        /// İmza seviyesi (sayısal değer).
+        /// </summary>
+        public string Level { get; set; }
+
+        /// <summary>
+        /// İmza seviyesinin metin karşılığı (örn: BES, T, XL, A).
+        /// </summary>
+        public string LevelString { get; set; }
+
+        /// <summary>
+        /// İmza sahibinin RDN (Relative Distinguished Name) bilgisi.
+        /// </summary>
+        public string SubjectRDN { get; set; }
+
+        /// <summary>
+        /// İmza sahibinin TC kimlik numarası (varsa).
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+        /// <summary>
+        /// İmzanın zaman damgalı olup olmadığı.
+        /// </summary>
+        public bool Timestamped { get; set; }
+
+        /// <summary>
+        /// İmza atılma zamanı (metin formatında).
+        /// </summary>
+        public string? ClaimedSigningTime { get; set; }
+
+        /// <summary>
+        /// İmza atılma zamanı (DateTime formatında).
+        /// </summary>
+        public DateTime? ClaimedSigningTimeAsTime { get; set; }
+
+        /// <summary>
+        /// Üst imzanın EntityLabel'ı (seri imzalarda).
+        /// </summary>
+        public string? ParentEntity { get; set; }
+
+        /// <summary>
+        /// İmza profil adı (örn: P2, P3, P4).
+        /// </summary>
+        public string? ProfileName { get; set; }
+
+        /// <summary>
+        /// İmza politika OID'si.
+        /// </summary>
+        public string? PolicyOID { get; set; }
+
+        /// <summary>
+        /// İmzada kullanılan hash algoritması.
+        /// </summary>
+        public string? HashAlgorithm { get; set; }
+
+        /// <summary>
+        /// İmzanın uzun vadeli doğrulama bilgisi içerip içermediği.
+        /// </summary>
+        public bool ContainsLongTermInfo { get; set; }
+
+        /// <summary>
+        /// Son arşiv zaman damgası zamanı (varsa).
+        /// </summary>
+        public string? LastArchivalTime { get; set; }
+
+        /// <summary>
+        /// Zaman damgası detay bilgisi.
+        /// </summary>
+        public ProxyTimestampInfoItemV4? Timestamp { get; set; }
+
+        /// <summary>
+        /// İmza modu: Enveloped, Enveloping, veya Detached.
+        /// </summary>
+        public string SignatureMode { get; set; }
+
+        /// <summary>
+        /// Mevcut seviyeden yapılabilecek upgrade seçenekleri (örn: ["T","XL","A"]).
+        /// XAdES'te C ve X seviyeleri yoktur.
+        /// </summary>
+        public List<string> UpgradeOptions { get; set; } = new();
+
+        /// <summary>
+        /// Profil uyumlu upgrade seçenekleri. Profil yoksa null döner.
+        /// </summary>
+        public List<string>? ProfileRecommendedUpgrades { get; set; }
+
+        /// <summary>
+        /// Profil dışı upgrade seçenekleri. Profil yoksa null döner.
+        /// </summary>
+        public List<string>? ProfileIncompatibleUpgrades { get; set; }
+    }
+
+    #endregion
+
 }
