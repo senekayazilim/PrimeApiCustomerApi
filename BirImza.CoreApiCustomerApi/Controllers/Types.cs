@@ -1552,6 +1552,14 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         public XadesSignatureModeV4 SignatureMode { get; set; }
 
         /// <summary>
+        /// Detached imzalarda: imza XML'indeki Reference URI değeri.
+        /// Örn: "belge.xml" → &lt;ds:Reference URI="belge.xml"&gt; olur.
+        /// Boş bırakılırsa sunucu tarafında dosya adından türetilir.
+        /// Sadece Detached modda anlamlıdır, diğer modlarda yok sayılır.
+        /// </summary>
+        public string? DetachedResourceUri { get; set; }
+
+        /// <summary>
         /// Detached imzalarda: orijinal dosyanın OperationId'si.
         /// Enveloped/Enveloping'de null.
         /// </summary>

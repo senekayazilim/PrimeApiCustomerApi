@@ -2540,6 +2540,14 @@ namespace  BirImza.Types
         public Guid? OriginalFileOperationId { get; set; }
 
         /// <summary>
+        /// Detached imzalarda: imza XML'indeki Reference URI değeri.
+        /// Örn: "belge.xml" → &lt;ds:Reference URI="belge.xml"&gt; olur.
+        /// Boş bırakılırsa sunucu tarafında dosya adından türetilir.
+        /// Sadece Detached modda anlamlıdır, diğer modlarda yok sayılır.
+        /// </summary>
+        public string? DetachedResourceUri { get; set; }
+
+        /// <summary>
         /// Enveloped modda çoklu imza için: XML'deki hedef elementin Id attribute'u.
         /// Örn: "content-1" → Reference URI="#content-1" olur.
         /// Boş ise URI="" ile tüm doküman imzalanır (UseEnvelopedSignatureTransform=true).

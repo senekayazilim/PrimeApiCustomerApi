@@ -512,6 +512,7 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                         Profile = request.Profile,
                                         HashAlgorithm = request.HashAlgorithm,
                                         SignatureMode = request.SignatureMode,
+                                        DetachedResourceUri = request.DetachedResourceUri,
                                         OriginalFileOperationId = request.OriginalFileOperationId,
                                         EnvelopedContentElementId = request.EnvelopedContentElementId,
                                          EnvelopingObjectEncoding = request.EnvelopingObjectEncoding,
