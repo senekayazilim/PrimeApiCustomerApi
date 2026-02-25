@@ -1,3 +1,4 @@
+using System.Linq;
 using BirImza.Types;
 using BirImza.Types.Shared;
 using Flurl.Http;
@@ -710,6 +711,351 @@ namespace BirImza.CoreApiCustomerApi.Controllers
             }
 
             return BadRequest("Hata");
+        }
+
+        #endregion
+
+        #region Mobile Sign
+
+        /// <summary>
+        /// V4 CAdES mobil imza ile e-imza atma işlemidir.
+        /// Mobil imza operatörü üzerinden tek adımda imza atılır.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("MobileSignCadesV4")]
+        public async Task<ProxySignStepOneCoreForCadesMobileResultV4> MobileSignCadesV4(ProxySignStepOneCadesMobileCoreRequestV4 request)
+        {
+            _logger.LogInformation("MobileSignCadesV4 start");
+
+            var result = new ProxySignStepOneCoreForCadesMobileResultV4();
+
+            try
+            {
+                var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiCadesMobile/SignStepOneCadesMobileCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new SignStepOneCadesMobileCoreRequestV4()
+                                        {
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                            PhoneNumber = request.PhoneNumber,
+                                            Operator = request.Operator,
+                                            UserPrompt = request.UserPrompt,
+                                            CitizenshipNo = request.CitizenshipNo,
+                                            SignatureLevel = request.SignatureLevel,
+                                            Profile = request.Profile,
+                                            SerialOrParallel = request.SerialOrParallel,
+                                            SignaturePath = request.SignaturePath,
+                                        })
+                                .ReceiveJson<ApiResult<SignStepOneCoreForCadesMobileResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error))
+                {
+                    result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+                    result.OperationId = signStepOneCoreResult.Result.OperationId;
+                }
+                else
+                {
+                    result.Error = signStepOneCoreResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MobileSignCadesV4");
+                result.Error = ex.Message;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// V4 PAdES mobil imza ile e-imza atma işlemidir.
+        /// Mobil imza operatörü üzerinden tek adımda imza atılır.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("MobileSignPadesV4")]
+        public async Task<ProxySignStepOneCoreForPadesMobileResultV4> MobileSignPadesV4(ProxySignStepOnePadesMobileCoreRequestV4 request)
+        {
+            _logger.LogInformation("MobileSignPadesV4 start");
+
+            var result = new ProxySignStepOneCoreForPadesMobileResultV4();
+
+            try
+            {
+                var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiPadesMobile/SignStepOnePadesMobileCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new SignStepOnePadesMobileCoreRequestV4()
+                                        {
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                            PhoneNumber = request.PhoneNumber,
+                                            Operator = request.Operator,
+                                            UserPrompt = request.UserPrompt,
+                                            CitizenshipNo = request.CitizenshipNo,
+                                            SignatureLevel = request.SignatureLevel,
+                                            Profile = request.Profile,
+                                        })
+                                .ReceiveJson<ApiResult<SignStepOneCoreForPadesMobileResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error))
+                {
+                    result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+                    result.OperationId = signStepOneCoreResult.Result.OperationId;
+                }
+                else
+                {
+                    result.Error = signStepOneCoreResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MobileSignPadesV4");
+                result.Error = ex.Message;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// V4 XAdES mobil imza ile e-imza atma işlemidir.
+        /// Mobil imza operatörü üzerinden tek adımda imza atılır.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("MobileSignXadesV4")]
+        public async Task<ProxySignStepOneCoreForXadesMobileResultV4> MobileSignXadesV4(ProxySignStepOneXadesMobileCoreRequestV4 request)
+        {
+            _logger.LogInformation("MobileSignXadesV4 start");
+
+            var result = new ProxySignStepOneCoreForXadesMobileResultV4();
+
+            try
+            {
+                var signStepOneCoreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiXadesMobile/SignStepOneXadesMobileCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new SignStepOneXadesMobileCoreRequestV4()
+                                        {
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                            PhoneNumber = request.PhoneNumber,
+                                            Operator = request.Operator,
+                                            UserPrompt = request.UserPrompt,
+                                            CitizenshipNo = request.CitizenshipNo,
+                                            SignatureLevel = request.SignatureLevel,
+                                            Profile = request.Profile,
+                                            SerialOrParallel = request.SerialOrParallel,
+                                            SignaturePath = request.SignaturePath,
+                                            EnvelopingOrEnveloped = request.EnvelopingOrEnveloped,
+                                        })
+                                .ReceiveJson<ApiResult<SignStepOneCoreForXadesMobileResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(signStepOneCoreResult.Error))
+                {
+                    result.IsSuccess = signStepOneCoreResult.Result.IsSuccess;
+                    result.OperationId = signStepOneCoreResult.Result.OperationId;
+                }
+                else
+                {
+                    result.Error = signStepOneCoreResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MobileSignXadesV4");
+                result.Error = ex.Message;
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #region Verify
+
+        /// <summary>
+        /// V4 CAdES imza doğrulama işlemidir.
+        /// </summary>
+        [HttpPost("VerifyCadesV4")]
+        public async Task<ProxyVerifyCadesCoreResultV4> VerifyCadesV4(ProxyVerifyCadesCoreRequestV4 request)
+        {
+            _logger.LogInformation("VerifyCadesV4 start");
+
+            var result = new ProxyVerifyCadesCoreResultV4();
+
+            try
+            {
+                var coreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiCades/VerifyCadesCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new VerifyCadesCoreRequestV4()
+                                        {
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                        })
+                                .ReceiveJson<ApiResult<VerifyCadesCoreResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(coreResult.Error))
+                {
+                    result.OperationId = coreResult.Result.OperationId;
+                    result.ValidationResult = MapValidationResult(coreResult.Result.ValidationResult);
+                }
+                else
+                {
+                    result.Error = coreResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "VerifyCadesV4");
+                result.Error = ex.Message;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// V4 PAdES imza doğrulama işlemidir.
+        /// </summary>
+        [HttpPost("VerifyPadesV4")]
+        public async Task<ProxyVerifyPadesCoreResultV4> VerifyPadesV4(ProxyVerifyPadesCoreRequestV4 request)
+        {
+            _logger.LogInformation("VerifyPadesV4 start");
+
+            var result = new ProxyVerifyPadesCoreResultV4();
+
+            try
+            {
+                var coreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiPades/VerifyPadesCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new VerifyPadesCoreRequestV4()
+                                        {
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                        })
+                                .ReceiveJson<ApiResult<VerifyPadesCoreResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(coreResult.Error))
+                {
+                    result.OperationId = coreResult.Result.OperationId;
+                    result.ValidationResult = MapValidationResult(coreResult.Result.ValidationResult);
+                }
+                else
+                {
+                    result.Error = coreResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "VerifyPadesV4");
+                result.Error = ex.Message;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// V4 XAdES imza doğrulama işlemidir.
+        /// </summary>
+        [HttpPost("VerifyXadesV4")]
+        public async Task<ProxyVerifyXadesCoreResultV4> VerifyXadesV4(ProxyVerifyXadesCoreRequestV4 request)
+        {
+            _logger.LogInformation("VerifyXadesV4 start");
+
+            var result = new ProxyVerifyXadesCoreResultV4();
+
+            try
+            {
+                var coreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiXades/VerifyXadesCore"
+                                .WithHeader("X-API-KEY", _apiKey)
+                                .PostJsonAsync(
+                                        new VerifyXadesCoreRequestV4()
+                                        {
+                                            OperationId = request.OperationId,
+                                            RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            DisplayLanguage = "en",
+                                        })
+                                .ReceiveJson<ApiResult<VerifyXadesCoreResultV4>>();
+
+                if (string.IsNullOrWhiteSpace(coreResult.Error))
+                {
+                    result.OperationId = coreResult.Result.OperationId;
+                    result.ValidationResult = MapValidationResult(coreResult.Result.ValidationResult);
+                }
+                else
+                {
+                    result.Error = coreResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "VerifyXadesV4");
+                result.Error = ex.Message;
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #region Private Helpers
+
+        private ProxyJavaValidationResultV4 MapValidationResult(JavaValidationResultV4 source)
+        {
+            if (source == null) return null;
+
+            return new ProxyJavaValidationResultV4
+            {
+                summary = source.summary,
+                signatureValidations = source.signatureValidations?.Select(MapSignatureValidationItem).ToList()
+            };
+        }
+
+        private ProxySignatureValidationItemV4 MapSignatureValidationItem(SignatureValidationItemV4 source)
+        {
+            if (source == null) return null;
+
+            return new ProxySignatureValidationItemV4
+            {
+                isExpanded = source.isExpanded,
+                signerFullName = source.signerFullName,
+                serialNumber = source.serialNumber,
+                reason = source.reason,
+                signatureType = source.signatureType,
+                signatureFormat = source.signatureFormat,
+                signatureAlg = source.signatureAlg,
+                signingTime = source.signingTime,
+                signingTimeDeclared = source.signingTimeDeclared,
+                policyDigestAlgorithm = source.policyDigestAlgorithm,
+                policyId = source.policyId,
+                policyUri = source.policyUri,
+                policyUserNotice = source.policyUserNotice,
+                policyTurkishESigProfile = source.policyTurkishESigProfile,
+                hasTimestamp = source.hasTimestamp,
+                timestamp = source.timestamp != null ? new ProxyTimestampValidationItemV4
+                {
+                    timestampType = source.timestamp.timestampType,
+                    dateOfTimestmap = source.timestamp.dateOfTimestmap
+                } : null,
+                validationResult = source.validationResult,
+                validationResultType = source.validationResultType,
+                validationCertificateStatusInfoCheckResults = source.validationCertificateStatusInfoCheckResults,
+                validationCertificateStatusInfoDetailedMessage = source.validationCertificateStatusInfoDetailedMessage,
+                validationCertificateStatusInfoDetailedValidationReport = source.validationCertificateStatusInfoDetailedValidationReport,
+                validationCertificateStatusInfoCheckResultsToString = source.validationCertificateStatusInfoCheckResultsToString,
+                validationCertificateStatusInfoValidationHistory = source.validationCertificateStatusInfoValidationHistory,
+                validationCertificateStatusInfotCertificateStatus = source.validationCertificateStatusInfotCertificateStatus,
+                counterSignatureValidations = source.counterSignatureValidations?.Select(MapSignatureValidationItem).ToList()
+            };
         }
 
         #endregion

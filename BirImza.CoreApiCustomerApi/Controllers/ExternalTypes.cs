@@ -1381,6 +1381,210 @@ namespace  BirImza.Types
 
     }
 
+    public class SignStepOneCadesMobileCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// Daha önce yüklenmiş dosyanın OperationId'sidir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Son kullanıcının geolocation bilgisidir. API bu alanı şimdilik kullanmamaktadır. Bu nedenle null olarak atanabilir.
+        /// </summary>
+        public SignStepOneRequestCoordinates? Coordinates { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasıdır. Örnek: 5446786666
+        /// </summary>
+        public string PhoneNumber { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasının bağlı olduğu operatördür. Örnek: TURKCELL, VODAFONE, AVEA
+        /// </summary>
+        public string Operator { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanıcıya gösterilecek mesaj
+        /// </summary>
+        public string UserPrompt { get; set; }
+
+        /// <summary>
+        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+        /// <summary>
+        /// İmza seviyesi. BES, EPES, T, C, X, XL, A değerlerinden biri.
+        /// </summary>
+        public SignatureLevelForCadesV4 SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Türk e-imza profili. None, P1, P2, P3, P4 değerlerinden biri.
+        /// </summary>
+        public CadesProfileV4 Profile { get; set; }
+
+        /// <summary>
+        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse Parallel imza atılır.
+        /// Olası değerler: SERIAL, PARALLEL
+        /// </summary>
+        public string? SerialOrParallel { get; set; }
+
+        /// <summary>
+        /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir.
+        /// Dosya üzerinde hiç imza yoksa boş geçilir.
+        /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
+        /// Dosya üzerinde iki tane imza var ise ve ikinci imza üzerine imza atılacaksa S0:S0 gönderilir.
+        /// Parallel imzada bu parametre yok sayılır.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+    }
+
+    public class SignStepOneCoreForCadesMobileResultV4
+    {
+        /// <summary>
+        /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
+        /// </summary>
+        public bool IsSuccess { get; set; }
+
+        /// <summary>
+        /// Sunucu tarafından oluşturulmuş OperationId'dir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    public class SignStepOnePadesMobileCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// Önceden upload edilmiş PDF dosyasının OperationId'si.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Son kullanıcının geolocation bilgisidir. API bu alanı şimdilik kullanmamaktadır. Bu nedenle null olarak atanabilir.
+        /// </summary>
+        public SignStepOneRequestCoordinates Coordinates { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasıdır.
+        /// </summary>
+        public string PhoneNumber { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasının bağlı olduğu operatördür. Örnek: TURKCELL, VODAFONE, AVEA
+        /// </summary>
+        public string Operator { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanıcıya gösterilecek mesaj
+        /// </summary>
+        public string UserPrompt { get; set; }
+
+        /// <summary>
+        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+        /// <summary>
+        /// Hedef imza seviyesi. BB, BT, BLT, BLTA
+        /// </summary>
+        public SignatureLevelForPadesV4 SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Türk imza profili. PAdES'te sadece P4 desteklenir.
+        /// None: profilsiz imza.
+        /// P4: EPES tabanlı imza (policy dahil, ÇİSDuP/OCSP).
+        /// </summary>
+        public PadesProfileV4 Profile { get; set; }
+    }
+
+    public class SignStepOneCoreForPadesMobileResultV4
+    {
+        /// <summary>
+        /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
+        /// </summary>
+        public bool IsSuccess { get; set; }
+
+        /// <summary>
+        /// Sunucu tarafından oluşturulmuş OperationId'dir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
+
+    public class SignStepOneXadesMobileCoreRequestV4 : BaseRequest
+    {
+        /// <summary>
+        /// Daha önce yüklenmiş dosyanın OperationId'sidir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Son kullanıcının geolocation bilgisidir. API bu alanı şimdilik kullanmamaktadır. Bu nedenle null olarak atanabilir.
+        /// </summary>
+        public SignStepOneRequestCoordinates? Coordinates { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasıdır. Örnek: 5446786666
+        /// </summary>
+        public string PhoneNumber { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanılacak mobil imzaya ait telefon numarasının bağlı olduğu operatördür. Örnek: TURKCELL, VODAFONE, AVEA
+        /// </summary>
+        public string Operator { get; set; }
+
+        /// <summary>
+        /// İmza atarken kullanıcıya gösterilecek mesaj
+        /// </summary>
+        public string UserPrompt { get; set; }
+
+        /// <summary>
+        /// Mobil imza sahibi kişinin TC'si verilmesi durumunda, mobil imza sertifikası içindeki TC ile kontrol yapılır
+        /// </summary>
+        public string? CitizenshipNo { get; set; }
+
+        /// <summary>
+        /// İmza seviyesi. BES, EPES, T, XL, A değerlerinden biri.
+        /// </summary>
+        public SignatureLevelForXadesV4 SignatureLevel { get; set; }
+
+        /// <summary>
+        /// Türk e-imza profili. None, P1, P2, P3, P4 değerlerinden biri.
+        /// </summary>
+        public XadesProfileV4 Profile { get; set; }
+
+        /// <summary>
+        /// Seri veya paralel imza atılıp atılacağını belirler, boş geçilirse Parallel imza atılır.
+        /// Olası değerler: SERIAL, PARALLEL
+        /// </summary>
+        public string? SerialOrParallel { get; set; }
+
+        /// <summary>
+        /// Seri imza atılacaksa, dosya üzerinde hangi imzanın üzerine imza atılacağı bilgisidir.
+        /// Dosya üzerinde hiç imza yoksa boş geçilir.
+        /// Dosya üzerine tek imza var ise ve o imzanın üzerine imza atılacaksa S0 gönderilir.
+        /// Dosya üzerinde iki tane imza var ise ve ikinci imza üzerine imza atılacaksa S0:S0 gönderilir.
+        /// Parallel imzada bu parametre yok sayılır.
+        /// </summary>
+        public string? SignaturePath { get; set; }
+
+        /// <summary>
+        /// İlk imza türü: ENVELOPING veya ENVELOPED. Dosya üzerinde zaten imza varsa bu alan yok sayılır.
+        /// </summary>
+        public string EnvelopingOrEnveloped { get; set; }
+    }
+
+    public class SignStepOneCoreForXadesMobileResultV4
+    {
+        /// <summary>
+        /// İşlemin başarıyla tamamlanıp tamamlanmadığını gösterir
+        /// </summary>
+        public bool IsSuccess { get; set; }
+
+        /// <summary>
+        /// Sunucu tarafından oluşturulmuş OperationId'dir.
+        /// </summary>
+        public Guid OperationId { get; set; }
+    }
 
     public class SignStepOneCoreInternalForPadesMobileResult
     {
@@ -2736,6 +2940,91 @@ namespace  BirImza.Types
         /// Profil dışı upgrade seçenekleri. Profil yoksa null.
         /// </summary>
         public List<string>? ProfileIncompatibleUpgrades { get; set; }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // V4 Verification Request/Result Types
+    // ═══════════════════════════════════════════════════════════════
+
+    public class VerifyCadesCoreRequestV4 : BaseRequest
+    {
+        public Guid OperationId { get; set; }
+    }
+
+    public class VerifyPadesCoreRequestV4 : BaseRequest
+    {
+        public Guid OperationId { get; set; }
+    }
+
+    public class VerifyXadesCoreRequestV4 : BaseRequest
+    {
+        public Guid OperationId { get; set; }
+    }
+
+    public class VerifyCadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public JavaValidationResultV4 ValidationResult { get; set; }
+    }
+
+    public class VerifyPadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public JavaValidationResultV4 ValidationResult { get; set; }
+    }
+
+    public class VerifyXadesCoreResultV4
+    {
+        public Guid OperationId { get; set; }
+        public JavaValidationResultV4 ValidationResult { get; set; }
+    }
+
+    public class JavaValidationResultV4
+    {
+        public List<SignatureValidationItemV4> signatureValidations { get; set; }
+
+        /// <summary>
+        /// ALL_VALID, CONTAINS_INVALID, CONTAINS_INCOMPLETE
+        /// </summary>
+        public string summary { get; set; }
+    }
+
+    public class SignatureValidationItemV4
+    {
+        public bool isExpanded { get; set; }
+        public string signerFullName { get; set; }
+        public string serialNumber { get; set; }
+        public string reason { get; set; }
+        public string signatureType { get; set; }
+        public string signatureFormat { get; set; }
+        public string signatureAlg { get; set; }
+        public DateTime? signingTime { get; set; }
+        public DateTime? signingTimeDeclared { get; set; }
+        public string policyDigestAlgorithm { get; set; }
+        public string policyId { get; set; }
+        public string policyUri { get; set; }
+        public string policyUserNotice { get; set; }
+        public string policyTurkishESigProfile { get; set; }
+
+        public bool hasTimestamp { get; set; }
+        public TimestampValidationItemV4 timestamp { get; set; }
+
+        public string validationResult { get; set; }
+        public string validationResultType { get; set; }
+        public string validationCertificateStatusInfoCheckResults { get; set; }
+        public string validationCertificateStatusInfoDetailedMessage { get; set; }
+        public string validationCertificateStatusInfoDetailedValidationReport { get; set; }
+        public string validationCertificateStatusInfoCheckResultsToString { get; set; }
+        public string validationCertificateStatusInfoValidationHistory { get; set; }
+        public string validationCertificateStatusInfotCertificateStatus { get; set; }
+
+        public List<SignatureValidationItemV4> counterSignatureValidations { get; set; }
+    }
+
+    public class TimestampValidationItemV4
+    {
+        public string timestampType { get; set; }
+        public DateTime dateOfTimestmap { get; set; }
     }
 
 }
