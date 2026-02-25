@@ -891,13 +891,14 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
             try
             {
-                var coreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiCades/VerifyCadesCore"
+                var coreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiVerification/VerifyCadesCore"
                                 .WithHeader("X-API-KEY", _apiKey)
                                 .PostJsonAsync(
                                         new VerifyCadesCoreRequestV4()
                                         {
                                             OperationId = request.OperationId,
                                             RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            OriginalFileOperationId = request.OriginalFileOperationId,
                                             DisplayLanguage = "en",
                                         })
                                 .ReceiveJson<ApiResult<VerifyCadesCoreResultV4>>();
@@ -933,13 +934,14 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
             try
             {
-                var coreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiPades/VerifyPadesCore"
+                var coreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiVerification/VerifyPadesCore"
                                 .WithHeader("X-API-KEY", _apiKey)
                                 .PostJsonAsync(
                                         new VerifyPadesCoreRequestV4()
                                         {
                                             OperationId = request.OperationId,
                                             RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            
                                             DisplayLanguage = "en",
                                         })
                                 .ReceiveJson<ApiResult<VerifyPadesCoreResultV4>>();
@@ -975,13 +977,14 @@ namespace BirImza.CoreApiCustomerApi.Controllers
 
             try
             {
-                var coreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiXades/VerifyXadesCore"
+                var coreResult = await $"{_onaylarimServiceUrl}/V4/CoreApiVerification/VerifyXadesCore"
                                 .WithHeader("X-API-KEY", _apiKey)
                                 .PostJsonAsync(
                                         new VerifyXadesCoreRequestV4()
                                         {
                                             OperationId = request.OperationId,
                                             RequestId = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 21),
+                                            OriginalFileOperationId = request.OriginalFileOperationId,
                                             DisplayLanguage = "en",
                                         })
                                 .ReceiveJson<ApiResult<VerifyXadesCoreResultV4>>();

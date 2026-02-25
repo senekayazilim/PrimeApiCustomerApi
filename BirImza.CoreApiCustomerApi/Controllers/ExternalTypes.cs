@@ -1389,11 +1389,6 @@ namespace  BirImza.Types
         public Guid OperationId { get; set; }
 
         /// <summary>
-        /// Son kullanıcının geolocation bilgisidir. API bu alanı şimdilik kullanmamaktadır. Bu nedenle null olarak atanabilir.
-        /// </summary>
-        public SignStepOneRequestCoordinates? Coordinates { get; set; }
-
-        /// <summary>
         /// İmza atarken kullanılacak mobil imzaya ait telefon numarasıdır. Örnek: 5446786666
         /// </summary>
         public string PhoneNumber { get; set; }
@@ -1460,11 +1455,6 @@ namespace  BirImza.Types
         public Guid OperationId { get; set; }
 
         /// <summary>
-        /// Son kullanıcının geolocation bilgisidir. API bu alanı şimdilik kullanmamaktadır. Bu nedenle null olarak atanabilir.
-        /// </summary>
-        public SignStepOneRequestCoordinates Coordinates { get; set; }
-
-        /// <summary>
         /// İmza atarken kullanılacak mobil imzaya ait telefon numarasıdır.
         /// </summary>
         public string PhoneNumber { get; set; }
@@ -1517,10 +1507,6 @@ namespace  BirImza.Types
         /// </summary>
         public Guid OperationId { get; set; }
 
-        /// <summary>
-        /// Son kullanıcının geolocation bilgisidir. API bu alanı şimdilik kullanmamaktadır. Bu nedenle null olarak atanabilir.
-        /// </summary>
-        public SignStepOneRequestCoordinates? Coordinates { get; set; }
 
         /// <summary>
         /// İmza atarken kullanılacak mobil imzaya ait telefon numarasıdır. Örnek: 5446786666
@@ -2949,6 +2935,12 @@ namespace  BirImza.Types
     public class VerifyCadesCoreRequestV4 : BaseRequest
     {
         public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Detached imzalarda: orijinal dosyanın operasyon ID'si.
+        /// Attached imzalarda null/boş.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
     }
 
     public class VerifyPadesCoreRequestV4 : BaseRequest
@@ -2959,6 +2951,12 @@ namespace  BirImza.Types
     public class VerifyXadesCoreRequestV4 : BaseRequest
     {
         public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Detached imzalarda: orijinal dosyanın operasyon ID'si.
+        /// Attached imzalarda null/boş.
+        /// </summary>
+        public Guid? OriginalFileOperationId { get; set; }
     }
 
     public class VerifyCadesCoreResultV4

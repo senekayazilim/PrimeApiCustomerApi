@@ -2013,6 +2013,12 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// Daha önce yüklenmiş dosyanın OperationId'sidir.
         /// </summary>
         public Guid OperationId { get; set; }
+
+        /// <summary>
+/// Detached imzalarda: orijinal dosyanın operasyon ID'si.
+/// Attached imzalarda null/boş.
+/// </summary>
+public Guid? OriginalFileOperationId { get; set; }
     }
 
     public class ProxyVerifyCadesCoreResultV4
@@ -2028,6 +2034,8 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// Daha önce yüklenmiş dosyanın OperationId'sidir.
         /// </summary>
         public Guid OperationId { get; set; }
+
+
     }
 
     public class ProxyVerifyPadesCoreResultV4
@@ -2043,6 +2051,12 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// Daha önce yüklenmiş dosyanın OperationId'sidir.
         /// </summary>
         public Guid OperationId { get; set; }
+
+        /// <summary>
+/// Detached imzalarda: orijinal dosyanın operasyon ID'si.
+/// Attached imzalarda null/boş.
+/// </summary>
+public Guid? OriginalFileOperationId { get; set; }
     }
 
     public class ProxyVerifyXadesCoreResultV4
