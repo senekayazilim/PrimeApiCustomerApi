@@ -18,9 +18,13 @@ builder.Services.Configure<BirImza.CoreApiCustomerApi.Configuration.OnaylarimApi
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
 
-builder.Services.AddCors(p => p.AddPolicy("corsapp", builder =>
+builder.Services.AddCors(p => p.AddPolicy("corsapp", corsBuilder =>
 {
-    builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+#if DEBUG
+    corsBuilder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+#else
+    corsBuilder.WithOrigins("https://coreapicustomervue.pages.dev").AllowAnyMethod().AllowAnyHeader();
+#endif
 }));
 
 var app = builder.Build();
