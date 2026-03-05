@@ -1792,7 +1792,7 @@ namespace  BirImza.Types
         /// <summary>
         /// İmza görselinde arka plan görseli olarak kullanılacak imajın datasıdır. İmaj jpg olmalıdır
         /// </summary>
-        public byte[] ImageBytes { get; set; }
+        public byte[]? ImageBytes { get; set; }
         /// <summary>
         /// İmza görselinin hangi sayfalara yerleştirileceği bilgisidir, 0 dan başlar.
         /// </summary>
