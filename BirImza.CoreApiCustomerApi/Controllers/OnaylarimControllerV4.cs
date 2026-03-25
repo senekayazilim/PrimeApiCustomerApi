@@ -799,6 +799,30 @@ namespace BirImza.CoreApiCustomerApi.Controllers
                                             CitizenshipNo = request.CitizenshipNo,
                                             SignatureLevel = request.SignatureLevel,
                                             Profile = request.Profile,
+                                            SignatureWidgetInfo = request.SignatureWidgetInfo != null ? new SignatureWidgetInfo()
+                                            {
+                                                Width = request.SignatureWidgetInfo.Width,
+                                                Height = request.SignatureWidgetInfo.Height,
+                                                Left = request.SignatureWidgetInfo.Left,
+                                                Right = request.SignatureWidgetInfo.Right,
+                                                Top = request.SignatureWidgetInfo.Top,
+                                                Bottom = request.SignatureWidgetInfo.Bottom,
+                                                TransformOrigin = request.SignatureWidgetInfo.TransformOrigin,
+                                                ImageBytes = request.SignatureWidgetInfo.ImageBytes,
+                                                PagesToPlaceOn = request.SignatureWidgetInfo.PagesToPlaceOn,
+                                                Lines = request.SignatureWidgetInfo.Lines?.Select(l => new LineInfo()
+                                                {
+                                                    Text = l.Text,
+                                                    LeftMargin = l.LeftMargin,
+                                                    TopMargin = l.TopMargin,
+                                                    BottomMargin = l.BottomMargin,
+                                                    RightMargin = l.RightMargin,
+                                                    FontName = l.FontName,
+                                                    FontSize = l.FontSize,
+                                                    FontStyle = l.FontStyle,
+                                                    ColorHtml = l.ColorHtml,
+                                                }).ToList(),
+                                            } : null,
                                         })
                                 .ReceiveJson<ApiResult<SignStepOneCoreForPadesMobileResultV4>>();
 

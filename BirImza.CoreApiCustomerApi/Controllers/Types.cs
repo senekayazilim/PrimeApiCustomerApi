@@ -1906,6 +1906,11 @@ namespace BirImza.CoreApiCustomerApi.Controllers
         /// P4: EPES tabanlı imza (policy dahil, ÇİSDuP/OCSP).
         /// </summary>
         public PadesProfileV4 Profile { get; set; }
+
+        /// <summary>
+        /// Görsel imza widget bilgisi. null ise görünmez imza atılır.
+        /// </summary>
+        public SignatureWidgetInfo? SignatureWidgetInfo { get; set; }
     }
 
     public class ProxySignStepOneCoreForPadesMobileResultV4
