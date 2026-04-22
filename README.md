@@ -13,4 +13,8 @@ Kendi uygulamanıza ait servisleri oluşturmanız için örnek projedir.
 **OnaylarimController** sınıfında bulunan **apiKey** değerini size verilen API anahtarı ile değiştiriniz.
 
 
+https://seneka.com.tr
+https://seneka.com.tr/primeapi
+
+
 
