@@ -14,6 +14,7 @@ Kendi uygulamanıza ait servisleri oluşturmanız için örnek projedir.
 
 
 https://seneka.com.tr
+
 https://seneka.com.tr/primeapi
 
 
